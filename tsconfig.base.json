@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "sourceMap": true,
+    "target": "es2016",
+    "declaration": true,
+    "useDefineForClassFields": false,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "strict": true,
+    "composite": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "removeComments": false,
+    "types": ["jest"],
+  },
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "src",
+    "jsx": "react",
+    "outDir": "lib",
+    "paths": {
+      "linked-data": ["../lib"]
+    }
+  },
+  "include": ["./src/**/*.ts","./src/**/*.tsx"]
+}

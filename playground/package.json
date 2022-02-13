@@ -1,0 +1,16 @@
+{
+  "name": "playground",
+  "private": true,
+  "scripts": {
+    "xx:esbuild": "esbuild --bundle --minify --sourcemap --outdir=dist ./src/index.tsx",
+    "waitForDist": "sh -c 'while [ ! -f ../dist/index.js ]; do sleep 1; done'",
+    "start": "npm run waitForDist && npm run xx:esbuild -- --servedir=.",
+    "build": "npm run xx:esbuild"
+  },
+  "dependencies": {
+    "linked-data": "file:.."
+  },
+  "devDependencies": {
+    "react": "npm:preact@^10.6.5"
+  }
+}

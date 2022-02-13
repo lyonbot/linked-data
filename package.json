@@ -1,0 +1,56 @@
+{
+  "name": "linked-data",
+  "version": "1.0.0",
+  "description": "Load and edit linked data easily",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint --ext ts,tsx .",
+    "clean": "rimraf dist lib temp coverage tsconfig.tsbuildinfo",
+    "xx:esbuild": "esbuild --bundle lib/index.js --minify --sourcemap",
+    "build": "run-s -l build:ts && run-p -l build:bundle build:types",
+    "build:ts": "tsc -b .",
+    "build:types": "api-extractor run --local",
+    "build:bundle": "run-p build:bundle:cjs build:bundle:esm",
+    "build:bundle:esm": "npm run xx:esbuild -- --outfile=dist/index.esm.js --format=esm",
+    "build:bundle:cjs": "npm run xx:esbuild -- --outfile=dist/index.js --format=cjs",
+    "watch": "run-p -l watch:*",
+    "watch:ts": "tsc -b . -w",
+    "watch:types": "echo \"export * from '../lib/index';\" > dist/index.d.ts",
+    "watch:bundle": "run-p watch:bundle:*",
+    "watch:bundle:esm": "npm run build:bundle:esm -- --watch",
+    "watch:bundle:cjs": "npm run build:bundle:cjs -- --watch",
+    "dev": "rimraf dist && mkdir -p dist && run-p watch dev:playground",
+    "dev:playground": "cd playground && npm start"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lyonbot/linked-data.git"
+  },
+  "keywords": [],
+  "author": "lyonbot",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lyonbot/linked-data/issues"
+  },
+  "homepage": "https://github.com/lyonbot/linked-data#readme",
+  "devDependencies": {
+    "@babel/preset-env": "^7.16.5",
+    "@microsoft/api-extractor": "^7.19.2",
+    "@types/jest": "^27.0.3",
+    "@typescript-eslint/eslint-plugin": "^5.8.1",
+    "@typescript-eslint/parser": "^5.8.1",
+    "esbuild": "^0.14.6",
+    "eslint": "^8.5.0",
+    "jest": "^27.4.5",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^27.1.2",
+    "typescript": "^4.5.4"
+  }
+}

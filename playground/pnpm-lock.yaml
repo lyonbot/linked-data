@@ -1,0 +1,19 @@
+lockfileVersion: 5.3
+
+specifiers:
+  linked-data: file:..
+  react: npm:preact@^10.6.5
+
+dependencies:
+  linked-data: link:..
+
+devDependencies:
+  react: mirrors.tencent.com/preact/10.6.5
+
+packages:
+
+  mirrors.tencent.com/preact/10.6.5:
+    resolution: {integrity: sha512-i+LXM6JiVjQXSt2jG2vZZFapGpCuk1fl8o6ii3G84MA3xgj686FKjs4JFDkmUVhtxyq21+4ay74zqPykz9hU6w==, registry: http://mirrors.cloud.tencent.com/npm/, tarball: https://mirrors.tencent.com/npm/preact/-/preact-10.6.5.tgz}
+    name: preact
+    version: 10.6.5
+    dev: true
