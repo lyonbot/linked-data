@@ -1,5 +1,6 @@
 export class Context {
   nodes: Map<string, Node> = new Map();
+  v2nLUT: WeakMap<any, Node> = new WeakMap();
 
   allocIdentifier(value: any): string {
     return '';

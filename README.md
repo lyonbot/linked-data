@@ -159,12 +159,19 @@ You can see lots of generated, `unnamed_`-prefixed identifiers in the example ab
 
 </details>
 
-### Value shall be schema-free
+### When you need Schemas
 
-Schema is NOT the only guideline to create references.
+Schemas are optional. They only play a role in defining those rules:
 
-User may create references anywhere when needed. This is like refactoring, you can extract anything to a constant / module / variable.
+- `key`:
+  - when importing, how to read Identifier from raw JSON object
+  - when exporting, how to write Identifier to the exported JSON object
 
-The separated Node list shall be **schema-free** so we can maintain it even when rules/schemas absent.
+- `properties` for objects, or `items` for arrays
+  - when importing, convert some properties it into a _Node Reference_.
+  - when exporting, convert some "referring" properties into node.
+  - when writing values (not reference) into certain properties, automatically create new Node and new reference.
+
+However the other properties **CAN** be a _Node Reference_ too -- user can make links anywhere.
 
 ### Node to Schema
