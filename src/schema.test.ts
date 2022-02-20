@@ -8,7 +8,7 @@ describe('Schema', () => {
       Pagelet: {
         type: 'object',
         properties: {
-          layout: 'Layout',
+          content: 'Layout',
         },
       },
       Layout: {
@@ -45,16 +45,25 @@ describe('Schema', () => {
     expect(Pagelet.get(null)).toBe(null);
     expect(Pagelet.get('invalid')).toBe(null);
 
-    expect(Pagelet.get('layout')).toBe(Layout);
+    expect(Pagelet.get('content')).toBe(Layout);
     expect(Layout.get('children')).toBe(LayoutArray);
     expect(LayoutArray.get('0')).toBe(Layout);
 
     // anonymous schema
     const slots = Layout.get('slots')!;
-    expect(context.isAnonymousSchema(slots));
     expect(Layout.get('slots')).toBe(slots);
     expect(slots.get('foobar')).toBe(LayoutArray);
     expect(slots.get('baz')).toBe(LayoutArray);
+
+    // get schema by path
+    expect(context.get('#/Pagelet/content/children/5')).toBe(Layout);
+    expect(context.get(['Pagelet', 'content', 'children', '5'])).toBe(Layout);
+    expect(context.get('#/')).toBe(null);
+    expect(context.get([])).toBe(null);
+
+    expect(Pagelet.get([])).toBe(Pagelet);
+    expect(Pagelet.get(['content', 'children', '5'])).toBe(Layout);
+    expect(Pagelet.get(['content', 'children', '5', 'children'])).toBe(LayoutArray);
   });
 
   it('ObjectSchema: keying', () => {
@@ -114,5 +123,42 @@ describe('Schema', () => {
 
     expect(read).toBeCalledTimes(4);
     expect(write).toBeCalledTimes(2);
+  });
+
+  it('ObjectSchema: change schema on the fly', () => {
+    const schemas = new SchemaContext({
+      Message: {
+        type: 'object',
+        properties: {
+          replies: { type: 'array', items: 'Message' },
+        },
+      },
+    });
+
+    const Message = schemas.get('Message') as ObjectSchema;
+
+    expect(Message.get('parent')).toBe(null);
+    expect(Message.get('replies')).not.toBe(null);
+
+    // ----------------------------
+    // add and remove properties
+
+    Message.addProperties({ parent: 'Message' });
+
+    expect(Message.get('parent')).toBe(Message);
+    expect(Message.get('replies')).not.toBe(null);
+
+    Message.removeProperties(['replies']);
+
+    expect(Message.get('parent')).toBe(Message);
+    expect(Message.get('replies')).toBe(null);
+
+    // ----------------------------
+    // not recommended: set Message.properties directly
+
+    Message.properties = { ...Message.properties, root: 'Message' };
+
+    expect(Message.get('root')).toBe(Message);
+    expect(Message.get('parent')).toBe(Message);
   });
 });

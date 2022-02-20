@@ -165,4 +165,30 @@ describe('LinkedData', () => {
     expect(msgNode.value).toEqual({ text: 'Awesome' });
     expect(exported).toEqual({ text: "I'm a string" }); // old exported data is not affected
   });
+
+  it('DataNode: void node', () => {
+    const ld = new LinkedData({});
+
+    const node1 = ld.createVoidNode({});
+    const node2 = ld.import({ foo: node1, bar: [node1.ref] });
+
+    expect(() => node2.value).not.toThrow(); // as long as we don't read "foo"
+    expect(() => node2.value.foo).toThrowError('void');
+    expect(() => node2.value.bar).not.toThrow(); // as long as we don't read "0"
+    expect(() => node2.value.bar[0]).toThrowError('void');
+    expect(() => node2.export()).toThrowError('void');
+
+    node1.value = 'test';
+
+    expect(node2.value).toEqual({ foo: 'test', bar: ['test'] });
+    expect(node2.export()).toEqual({ foo: 'test', bar: ['test'] });
+
+    node1.setVoid();
+
+    expect(() => node2.value).not.toThrow(); // as long as we don't read "foo"
+    expect(() => node2.value.foo).toThrowError('void');
+    expect(() => node2.value.bar).not.toThrow(); // as long as we don't read "0"
+    expect(() => node2.value.bar[0]).toThrowError('void');
+    expect(() => node2.export()).toThrowError('void');
+  });
 });

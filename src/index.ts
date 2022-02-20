@@ -1,26 +1,22 @@
-export class Context {
-  nodes: Map<string, Node> = new Map();
-  v2nLUT: WeakMap<any, Node> = new WeakMap();
+export { LinkedData, DataNode } from './LinkedData';
+export { toRef, isDataNodeRef } from './DataNodeRef';
+export {
+  isObject,
+  mapValues,
+  makeDataClass,
+  makeGetterFromDictionary,
+  createFactoryFromClass,
+  castConstructor,
+} from './utils';
 
-  allocIdentifier(value: any): string {
-    return '';
-  }
-
-  allocNode<T = any>(value: T): Node<T> {
-    return new Node(this, value);
-  }
-}
-
-export class Node<T = any> {
-  context: Context;
-  value: T;
-  id: string;
-
-  constructor(context: Context, value: T) {
-    this.context = context;
-    this.value = value;
-    this.id = context.allocIdentifier(value);
-
-    context.nodes.set(this.id, this);
-  }
-}
+export type { LinkedDataOptions } from './LinkedData';
+export type { DataNodeRef } from './DataNodeRef';
+export type {
+  ArraySchema,
+  ArraySchemaDescriptor,
+  ObjectSchema,
+  ObjectSchemaDescriptor,
+  Schema,
+  SchemaContext,
+  SchemaDescriptor,
+} from './schema';

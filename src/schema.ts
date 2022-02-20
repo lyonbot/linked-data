@@ -52,30 +52,52 @@ export class SchemaContext {
     return schema;
   }
 
-  get(x: string | SchemaDescriptor | Schema | null | undefined, via?: Schema, viaKey?: string) {
-    while (x && typeof x === 'string') x = this._dict[x];
+  get(
+    x: string[] | string | SchemaDescriptor | Schema | null | undefined,
+    via?: Schema,
+    viaKey?: string | number,
+  ): Schema | null {
+    // first process #/
+    // maybe is a path "#/Schema1/foo/bar"
 
-    if (!x || typeof x !== 'object') return null;
-    if ('$context' in x) return x;
+    if (typeof x === 'string') {
+      if (x.startsWith('#/')) {
+        const parts = x.slice(2).split('/');
+        return this.get(parts);
+      }
+    }
+
+    // resolve alias (in _dict, value can be string)
+
+    while (x && typeof x === 'string') x = this._dict[x];
+    if (!x || typeof x === 'string') return null;
+
+    if (Array.isArray(x)) {
+      if (!x[0]) return null;
+      return x.slice(1).reduce((p, c) => p && p.get(c), this.get(x[0]));
+    }
+
+    if ('$context' in x) return x; // already a Schema instance, just return
 
     const key = this._sdMap.get(x);
     if (key) return key;
 
-    const tempId = `${via!.$id}/${viaKey!}`;
+    // for anonymous schema, when we first encounter it, it is not in `_sdMap`
+    // we need to create a new Schema instance and give it a path-like id
+
+    let tempId = `${via!.$id}/${viaKey!}`;
+    if (!tempId.startsWith('#/')) tempId = `#/${tempId}`;
     const s = this.register(tempId, x)!;
     this._anon.add(s);
     return s;
-  }
-
-  isAnonymousSchema(schema: Schema) {
-    return this._anon.has(schema);
   }
 }
 
 export type Schema = ObjectSchema | ArraySchema;
 
 export class ObjectSchema extends makeDataClass<Required<ObjectSchemaDescriptor>>() {
-  private readonly _get = makeGetterFromDictionary(this.properties);
+  private _cachedProperties!: ObjectSchemaDescriptor['properties'];
+  private _getProperty!: (i: any) => string | SchemaDescriptor | undefined;
 
   readonly $context: SchemaContext;
   readonly $id: string;
@@ -84,16 +106,45 @@ export class ObjectSchema extends makeDataClass<Required<ObjectSchemaDescriptor>
     super({ key: '_id', ...input });
     this.$context = $context;
     this.$id = $id;
+
+    this.setProperties(this.properties);
+    Object.defineProperty(this, 'properties', {
+      enumerable: true,
+      configurable: true,
+      get: () => this._cachedProperties,
+      set: x => this.setProperties(x),
+    });
+  }
+
+  addProperties(properties: ObjectSchemaDescriptor['properties']): void {
+    this.setProperties({ ...this._cachedProperties, ...properties });
+  }
+
+  removeProperties(keys: string[]): void {
+    const properties = { ...this._cachedProperties };
+    keys.forEach(key => delete properties[key]);
+    this.setProperties(properties);
+  }
+
+  setProperties(properties: ObjectSchemaDescriptor['properties']): void {
+    this._cachedProperties = Object.freeze({ ...properties });
+    this._getProperty = makeGetterFromDictionary(this._cachedProperties);
   }
 
   /**
    * get property schema
    *
-   * @param key
+   * @param key can be a string, number or string[]
    * @returns Schema
    */
-  get(key: any) {
-    const ans = this._get(key);
+  get(key: null | undefined | string | number | (string | number)[]): Schema | null {
+    if (key == null) return null;
+    if (Array.isArray(key)) {
+      if (key.length === 0) return this;
+      return this.get(key[0])?.get(key.slice(1)) || null;
+    }
+
+    const ans = this._getProperty(key);
     return (ans && this.$context.get(ans, this, key)) || null;
   }
 
@@ -137,11 +188,18 @@ export class ArraySchema extends makeDataClass<Required<ArraySchemaDescriptor>>(
   }
 
   /**
-   * pseudo-getter for items. always return `this.items`
+   * get property schema
    *
-   * @returns always return `this.items`
+   * @param key can be a string, number or string[]
+   * @returns in most cases, just return `this.items` the Schema
    */
-  get(_?: any) {
+  get(key: null | undefined | string | number | (string | number)[]): Schema | null {
+    if (key == null) return null;
+    if (Array.isArray(key)) {
+      if (key.length === 0) return this;
+      return this.get(key[0])?.get(key.slice(1)) || null;
+    }
+
     return this.items;
   }
 }

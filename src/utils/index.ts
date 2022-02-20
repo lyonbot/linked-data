@@ -17,13 +17,14 @@ export const createFactoryFromClass = <T extends new (...args: any[]) => any>(ct
  * @public
  * @param ctor a function that returns a object, or a function whose `this` is typed
  */
-export function CastConstructor<T, T2, U extends any[]>(
+export function castConstructor<T, T2, U extends any[]>(
   ctor: (this: T, ...x: U) => T2,
 ): new (...x: U) => T2 extends void ? T : T2;
-export function CastConstructor(ctor: any) {
+export function castConstructor(ctor: any) {
   return function (this: any) {
     // eslint-disable-next-line prefer-rest-params
-    return ctor.apply(this, arguments);
+    const ans = ctor.apply(this, arguments);
+    if (ans) Object.assign(this, ans);
   } as unknown;
 }
 
@@ -32,10 +33,7 @@ export function CastConstructor(ctor: any) {
  *
  * @public
  */
-export const makeDataClass = <T>() =>
-  CastConstructor(function (this: T, data: T) {
-    Object.assign(this, data);
-  });
+export const makeDataClass = <T>() => castConstructor((x: T) => ({ ...x }));
 
 /**
  * Create a getter function from a dictionary.
@@ -68,4 +66,13 @@ export function makeGetterFromDictionary<T>(dict: Record<string, T>) {
 
 export function isObject(value: any): value is Record<string | number | symbol, any> {
   return typeof value === 'object' && value !== null;
+}
+
+export function mapValues(objOrArray: any, mapper: (value: any, key: string | number, whole: any) => any) {
+  if (!isObject(objOrArray)) return objOrArray;
+  if (Array.isArray(objOrArray)) return objOrArray.map(mapper);
+  return Object.keys(objOrArray).reduce((p, k) => {
+    p[k] = mapper(objOrArray[k], k, p);
+    return p;
+  }, {} as Record<string, any>);
 }

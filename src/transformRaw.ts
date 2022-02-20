@@ -1,7 +1,6 @@
-import { mapValues } from 'lodash';
 import { DataNodeRef, toRef } from './DataNodeRef';
 import { DataNode } from './LinkedData';
-import { isObject } from './utils';
+import { isObject, mapValues } from './utils';
 
 export interface TransformOptions {
   createDest(raw: any, node: DataNode | null): any;
@@ -31,7 +30,7 @@ export function transformRaw(entryRaw: DataNodeRef | any, options: TransformOpti
     const dest = options.createDest(raw, node);
     if (isObject(raw)) cache.set(raw, dest);
     if (isObject(dest) && isObject(raw)) {
-      const prepared = Array.isArray(raw) ? raw.map(convert1) : mapValues(raw, convert1);
+      const prepared = mapValues(raw, convert1);
       needFilling.push({ dest, prepared, raw, node });
     }
 
