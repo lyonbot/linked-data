@@ -1,4 +1,4 @@
-export { LinkedData, DataNode } from './LinkedData';
+export { LinkedData, DataNode, DataNodeStatus } from './LinkedData';
 export { toRef, isDataNodeRef } from './DataNodeRef';
 export {
   isObject,

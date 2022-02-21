@@ -2,7 +2,7 @@
  * Convert a class constructor to a factory function.
  *
  * @public
- * @param ctor a class constructor
+ * @param ctor - a class constructor
  */
 export const createFactoryFromClass = <T extends new (...args: any[]) => any>(ctor: T) => {
   return function (...args: ConstructorParameters<T>): InstanceType<T> {
@@ -15,7 +15,7 @@ export const createFactoryFromClass = <T extends new (...args: any[]) => any>(ct
  * Cheat TypeScript, make it believe that the function is a class constructor.
  *
  * @public
- * @param ctor a function that returns a object, or a function whose `this` is typed
+ * @param ctor - a function that returns a object, or a function whose `this` is typed
  */
 export function castConstructor<T, T2, U extends any[]>(
   ctor: (this: T, ...x: U) => T2,
@@ -40,7 +40,7 @@ export const makeDataClass = <T>() => castConstructor((x: T) => ({ ...x }));
  * You can use `/regex/i` as a key in the dictionary.
  *
  * @public
- * @param dict the dictionary
+ * @param dict - the dictionary
  * @returns a getter function
  */
 export function makeGetterFromDictionary<T>(dict: Record<string, T>) {
@@ -64,10 +64,22 @@ export function makeGetterFromDictionary<T>(dict: Record<string, T>) {
   };
 }
 
+/**
+ * check if a value is object but not null
+ *
+ * @public
+ */
 export function isObject(value: any): value is Record<string | number | symbol, any> {
   return typeof value === 'object' && value !== null;
 }
 
+/**
+ * if input is array, this is identical to `Array#map`
+ *
+ * if input is object, this transform values.
+ *
+ * @public
+ */
 export function mapValues(objOrArray: any, mapper: (value: any, key: string | number, whole: any) => any) {
   if (!isObject(objOrArray)) return objOrArray;
   if (Array.isArray(objOrArray)) return objOrArray.map(mapper);

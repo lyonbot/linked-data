@@ -4,10 +4,18 @@ import { getNormalObjectProxy } from './normalObjectProxy';
 import { toRef, isDataNodeRef, DataNodeRef, $getDataNode } from './DataNodeRef';
 import { transformRaw } from './transformRaw';
 
+/**
+ * @public
+ */
 export interface LinkedDataOptions {
   schemas?: Record<string, SchemaDescriptor | string> | SchemaContext;
 }
 
+/**
+ * All you need is this node manager.
+ * 
+ * @public
+ */
 export class LinkedData {
   schemas: SchemaContext;
   _nodes: Map<string, DataNode> = new Map();
@@ -23,8 +31,8 @@ export class LinkedData {
    * the `value` can NOT be circular!
    *
    * @public
-   * @param value data to be imported
-   * @param schema the schema name of current value
+   * @param value - data to be imported
+   * @param schema - the schema name of current value
    * @returns
    */
   import<T = any>(value: T, schema?: string | Schema | null) {
@@ -72,7 +80,10 @@ export class LinkedData {
   }
 }
 
-const enum DataNodeStatus {
+/**
+ * @public
+ */
+export const enum DataNodeStatus {
   VOID,
   FILLED_WITH_ANY,
   FILLED_WITH_REF,
@@ -83,6 +94,9 @@ const enum DataNodeStatus {
 const VOID_NODE_ERROR = 'DataNode is void, please set value before using';
 const $SET_TO_VOID = Symbol('$SET_TO_VOID');
 
+/**
+ * @public
+ */
 export class DataNode<T = any> {
   readonly id: string;
   readonly owner: LinkedData;
@@ -110,6 +124,9 @@ export class DataNode<T = any> {
     this.ref = new DataNodeRef(this);
   }
 
+  /**
+   * @internal
+   */
   get [$getDataNode]() {
     return this;
   }

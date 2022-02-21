@@ -4,8 +4,170 @@
 
 ```ts
 
+// Warning: (ae-forgotten-export) The symbol "ArraySchema_base" needs to be exported by the entry point index.d.ts
+//
+// @public
+export class ArraySchema extends ArraySchema_base {
+    // (undocumented)
+    readonly $context: SchemaContext;
+    // (undocumented)
+    readonly $id: string;
+    constructor($context: SchemaContext, $id: string, input: ArraySchemaDescriptor);
+    get(key: null | undefined | string | number | (string | number)[]): Schema | null;
+    // (undocumented)
+    readonly items: Schema;
+}
+
 // @public (undocumented)
-export const a = 312;
+export interface ArraySchemaDescriptor {
+    // (undocumented)
+    items: string | SchemaDescriptor;
+    // (undocumented)
+    type: 'array';
+}
+
+// @public
+export function castConstructor<T, T2, U extends any[]>(ctor: (this: T, ...x: U) => T2): new (...x: U) => T2 extends void ? T : T2;
+
+// @public
+export const createFactoryFromClass: <T extends new (...args: any[]) => any>(ctor: T) => (...args: ConstructorParameters<T>) => InstanceType<T>;
+
+// @public (undocumented)
+export class DataNode<T = any> {
+    // @internal (undocumented)
+    get [$getDataNode](): this;
+    constructor(owner: LinkedData, id: string, schema: Schema | null);
+    export(): T;
+    // (undocumented)
+    readonly id: string;
+    // (undocumented)
+    readonly owner: LinkedData;
+    _proxy?: any;
+    _raw?: any;
+    readonly ref: DataNodeRef;
+    // (undocumented)
+    readonly schema: Schema | null;
+    // (undocumented)
+    setValue(value: T): void;
+    setVoid(): void;
+    // (undocumented)
+    status: DataNodeStatus;
+    get value(): T;
+    set value(v: T);
+}
+
+// @public
+export class DataNodeRef {
+    constructor(node: DataNode);
+    // (undocumented)
+    node: DataNode;
+}
+
+// @public (undocumented)
+export const enum DataNodeStatus {
+    // (undocumented)
+    FILLED_WITH_ANY = 1,
+    // (undocumented)
+    FILLED_WITH_ARRAY = 4,
+    // (undocumented)
+    FILLED_WITH_OBJECT = 3,
+    // (undocumented)
+    FILLED_WITH_REF = 2,
+    // (undocumented)
+    VOID = 0
+}
+
+// @public (undocumented)
+export const isDataNodeRef: (value: any) => value is DataNodeRef;
+
+// @public
+export function isObject(value: any): value is Record<string | number | symbol, any>;
+
+// @public
+export class LinkedData {
+    constructor(options: LinkedDataOptions);
+    // (undocumented)
+    allocateId(_ref?: any): string;
+    // (undocumented)
+    createVoidNode<T = any>(options: {
+        id?: string;
+        schema?: string | Schema | null;
+    }): DataNode<T>;
+    // (undocumented)
+    getNode(id: string): DataNode<any> | undefined;
+    import<T = any>(value: T, schema?: string | Schema | null): DataNode<T>;
+    // (undocumented)
+    _nodes: Map<string, DataNode>;
+    // (undocumented)
+    prune(preservingNodes?: (string | DataNode)[]): void;
+    // (undocumented)
+    schemas: SchemaContext;
+}
+
+// @public (undocumented)
+export interface LinkedDataOptions {
+    // (undocumented)
+    schemas?: Record<string, SchemaDescriptor | string> | SchemaContext;
+}
+
+// @public
+export const makeDataClass: <T>() => new (x: T) => T extends void ? unknown : T;
+
+// @public
+export function makeGetterFromDictionary<T>(dict: Record<string, T>): (input: string | number | undefined | void | null) => T | undefined;
+
+// @public
+export function mapValues(objOrArray: any, mapper: (value: any, key: string | number, whole: any) => any): any;
+
+// Warning: (ae-forgotten-export) The symbol "ObjectSchema_base" needs to be exported by the entry point index.d.ts
+//
+// @public
+export class ObjectSchema extends ObjectSchema_base {
+    // (undocumented)
+    readonly $context: SchemaContext;
+    // (undocumented)
+    readonly $id: string;
+    constructor($context: SchemaContext, $id: string, input: ObjectSchemaDescriptor);
+    // (undocumented)
+    addProperties(properties: ObjectSchemaDescriptor['properties']): void;
+    get(key: null | undefined | string | number | (string | number)[]): Schema | null;
+    // (undocumented)
+    readKey(raw: any): unknown | undefined;
+    // (undocumented)
+    removeProperties(keys: string[]): void;
+    // (undocumented)
+    setProperties(properties: ObjectSchemaDescriptor['properties']): void;
+    // (undocumented)
+    writeKey(dest: any, key: any): void;
+}
+
+// @public (undocumented)
+export interface ObjectSchemaDescriptor {
+    key?: string | {
+        import: string | ((raw: any) => any);
+        export: string | ((dest: any, key: string) => void);
+    };
+    // (undocumented)
+    properties: Record<string, string | SchemaDescriptor>;
+    // (undocumented)
+    type: 'object';
+}
+
+// @public
+export type Schema = ObjectSchema | ArraySchema;
+
+// @public
+export class SchemaContext {
+    constructor(schemas?: Record<string, SchemaDescriptor | string>);
+    get(query: string[] | string | SchemaDescriptor | Schema | null | undefined, via?: Schema, viaKey?: string | number): Schema | null;
+    register(id: string, x: SchemaDescriptor | string): ObjectSchema | ArraySchema | undefined;
+}
+
+// @public (undocumented)
+export type SchemaDescriptor = ObjectSchemaDescriptor | ArraySchemaDescriptor;
+
+// @public
+export function toRef(value: any): DataNodeRef | undefined;
 
 // (No @packageDocumentation comment for this package)
 

@@ -1,8 +1,14 @@
 import { isObject, makeDataClass, makeGetterFromDictionary } from './utils';
 import defineLazyGetter from './utils/lazyGetter';
 
+/**
+ * @public
+ */
 export type SchemaDescriptor = ObjectSchemaDescriptor | ArraySchemaDescriptor;
 
+/**
+ * @public
+ */
 export interface ObjectSchemaDescriptor {
   type: 'object';
   properties: Record<string, string | SchemaDescriptor>;
@@ -23,11 +29,19 @@ export interface ObjectSchemaDescriptor {
       };
 }
 
+/**
+ * @public
+ */
 export interface ArraySchemaDescriptor {
   type: 'array';
   items: string | SchemaDescriptor;
 }
 
+/**
+ * schema manager, you can register schemas from SchemaDescriptor, and retrieve schemas by name / path
+ *
+ * @public
+ */
 export class SchemaContext {
   private _dict: Record<string, Schema | string> = Object.create(null);
   private _sdMap: Map<SchemaDescriptor, Schema> = new Map();
@@ -39,6 +53,13 @@ export class SchemaContext {
     });
   }
 
+  /**
+   * register a schema
+   *
+   * @param id - schema id
+   * @param x - can be a SchemaDescriptor or a existing Schema's id (if you want to create an alias)
+   * @returns
+   */
   register(id: string, x: SchemaDescriptor | string) {
     if (typeof x === 'string') {
       this._dict[id] = x;
@@ -52,34 +73,46 @@ export class SchemaContext {
     return schema;
   }
 
+  /**
+   * get schema by id or path
+   *
+   * @param query - can be...
+   *
+   *    1. a schema id, e.g. `User`
+   *    2. a path string (e.g. `'#/User/friends/2'`)
+   *    3. a path array (e.g. `['User', 'friends', 2]`)
+   *    4. (for internal use) a SchemaDescriptor or Schema instance
+   *
+   * @returns
+   */
   get(
-    x: string[] | string | SchemaDescriptor | Schema | null | undefined,
+    query: string[] | string | SchemaDescriptor | Schema | null | undefined,
     via?: Schema,
     viaKey?: string | number,
   ): Schema | null {
     // first process #/
     // maybe is a path "#/Schema1/foo/bar"
 
-    if (typeof x === 'string') {
-      if (x.startsWith('#/')) {
-        const parts = x.slice(2).split('/');
+    if (typeof query === 'string') {
+      if (query.startsWith('#/')) {
+        const parts = query.slice(2).split('/');
         return this.get(parts);
       }
     }
 
     // resolve alias (in _dict, value can be string)
 
-    while (x && typeof x === 'string') x = this._dict[x];
-    if (!x || typeof x === 'string') return null;
+    while (query && typeof query === 'string') query = this._dict[query];
+    if (!query || typeof query === 'string') return null;
 
-    if (Array.isArray(x)) {
-      if (!x[0]) return null;
-      return x.slice(1).reduce((p, c) => p && p.get(c), this.get(x[0]));
+    if (Array.isArray(query)) {
+      if (!query[0]) return null;
+      return query.slice(1).reduce((p, c) => p && p.get(c), this.get(query[0]));
     }
 
-    if ('$context' in x) return x; // already a Schema instance, just return
+    if ('$context' in query) return query; // already a Schema instance, just return
 
-    const key = this._sdMap.get(x);
+    const key = this._sdMap.get(query);
     if (key) return key;
 
     // for anonymous schema, when we first encounter it, it is not in `_sdMap`
@@ -87,14 +120,24 @@ export class SchemaContext {
 
     let tempId = `${via!.$id}/${viaKey!}`;
     if (!tempId.startsWith('#/')) tempId = `#/${tempId}`;
-    const s = this.register(tempId, x)!;
+    const s = this.register(tempId, query)!;
     this._anon.add(s);
     return s;
   }
 }
 
+/**
+ * Schema instance. Derived from SchemaDescriptor, with few extra useful methods.
+ * 
+ * @public
+ */
 export type Schema = ObjectSchema | ArraySchema;
 
+/**
+ * ObjectSchema instance. Derived from ObjectSchemaDescriptor, with few extra useful methods.
+ * 
+ * @public
+ */
 export class ObjectSchema extends makeDataClass<Required<ObjectSchemaDescriptor>>() {
   private _cachedProperties!: ObjectSchemaDescriptor['properties'];
   private _getProperty!: (i: any) => string | SchemaDescriptor | undefined;
@@ -134,7 +177,7 @@ export class ObjectSchema extends makeDataClass<Required<ObjectSchemaDescriptor>
   /**
    * get property schema
    *
-   * @param key can be a string, number or string[]
+   * @param key - can be a string, number or string[]
    * @returns Schema
    */
   get(key: null | undefined | string | number | (string | number)[]): Schema | null {
@@ -169,6 +212,11 @@ export class ObjectSchema extends makeDataClass<Required<ObjectSchemaDescriptor>
   }
 }
 
+/**
+ * ArraySchema instance. Derived from ArraySchemaDescriptor, with few extra useful methods.
+ * 
+ * @public
+ */
 export class ArraySchema extends makeDataClass<Required<ArraySchemaDescriptor>>() {
   readonly $context: SchemaContext;
   readonly $id: string;
@@ -190,7 +238,7 @@ export class ArraySchema extends makeDataClass<Required<ArraySchemaDescriptor>>(
   /**
    * get property schema
    *
-   * @param key can be a string, number or string[]
+   * @param key - can be a string, number or string[]
    * @returns in most cases, just return `this.items` the Schema
    */
   get(key: null | undefined | string | number | (string | number)[]): Schema | null {
