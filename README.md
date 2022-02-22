@@ -19,54 +19,29 @@ const data = {
 };
 ```
 
-Given some rules ... (usually described with JSON Schema, TypeScript Declarations and custom schemas)
-
-- **(mandatory)** entry is a _Node_
-- _Node_ is object or string
-- if a _Node_ is object:
-  - take the _Node_'s `id` as primary key 🔑
-  - _Node_'s `children` is _Array&lt;Node>_ 🔗
-
-We can separate it into
+And we know its pattern (schemas)
 
 ```js
-var entry = 'unnamed_card';
-var nodes = {
-  // the entry data
-  unnamed_card: {
-    type: 'card',
-    theme: 'black',
-    children: [
-      $ref(unnamed_paragraph), // 🔗 referring Node
-      $ref(openBtn), // --------- 🔗 referring Node
-    ],
+// data is Component
+const schemas = {
+  Component: {
+    type: 'object',
+    key: 'id', // if exists, take `id` property as unique key
+    properties: {
+      children: 'ComponentArray', // Array also has its own schema (see below)
+    },
   },
 
-  // extracted node without id
-  unnamed_paragraph: {
-    type: 'paragraph',
-    children: [
-      $ref(unnamed_text), // 🔗 referring Node
-    ],
+  ComponentArray: {
+    type: 'array',
+    items: 'Component',
   },
-
-  // extracted string node
-  unnamed_text: 'Welcome',
-
-  // extracted node with id
-  openBtn: {
-    id: 'openBtn',
-    type: 'button',
-    children: [
-      $ref(unnamed_text_2), // 🔗 referring Node
-    ],
-  },
-
-  // extracted another string node
-  // added _2 suffix to avoid duplicating
-  unnamed_text_2: 'Open',
 };
 ```
+
+We can convert the data it into lots of connected nodes, following the schema relations. 
+
+![](./images/example1.drawio.svg)
 
 ### Manipulating and Tracking Mutations
 
@@ -164,6 +139,7 @@ You can see lots of generated, `unnamed_`-prefixed identifiers in the example ab
 Schemas are optional. They only play a role in defining those rules:
 
 - `key`:
+
   - when importing, how to read Identifier from raw JSON object
   - when exporting, how to write Identifier to the exported JSON object
 
