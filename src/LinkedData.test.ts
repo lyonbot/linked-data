@@ -1,3 +1,4 @@
+import { toRef } from '.';
 import { DataNode, LinkedData } from './LinkedData';
 import { SchemaDescriptor } from './schema';
 
@@ -150,6 +151,121 @@ describe('LinkedData', () => {
     expect(ld._nodes.size).toBe(11);
   });
 
+  it('import: overwrite', () => {
+    const ld = new LinkedData({
+      schemas: {
+        Human: {
+          type: 'object',
+          key: 'id',
+          properties: {
+            friends: { type: 'array', items: 'Human' },
+          },
+        },
+        Dalek: {
+          type: 'object',
+          key: 'id',
+          properties: {
+            friends: { type: 'array', items: 'Dalek' },
+            earthFriends: { type: 'array', items: 'Human' },
+          },
+        },
+      },
+    });
+
+    const tonyData = {
+      id: 'tony',
+      name: 'Tony Stark',
+      friends: [
+        {
+          id: 'john',
+          name: 'John Smith',
+        },
+        {
+          id: 'river',
+          name: 'River Song',
+        },
+      ],
+    };
+
+    const $tony = ld.import(tonyData, 'Human');
+    expect($tony.id).toBe('tony');
+    expect(ld._nodes.size).toBe(4); // 3 Human + 1 HumanArray
+
+    const $tony2 = ld.import(tonyData, 'Human');
+    expect(ld._nodes.size).toBe(8);
+    expect($tony2).not.toBe($tony);
+    expect($tony2.id).not.toBe('tony');
+
+    const $tony3 = ld.import(tonyData, 'Human', { overwrite: 'always' });
+    expect(ld._nodes.size).toBe(8); // old nodes are overwritten
+    expect($tony3.id).toBe('tony');
+    expect($tony3).not.toBe($tony);
+    expect(ld.getNode('tony')).toBe($tony3);
+
+    // -------------
+    // same-schema: this will overwrite only if node has same schema
+    // so "tony" the Dalek will not overwrite "tony" the Human
+    // but "john" the Human will overwrite existing "john" the Human
+
+    const last$tony = ld.getNode('tony');
+    const last$john = ld.getNode('john');
+    const davrosData = {
+      id: 'Davros',
+      friends: [{ id: 'tony' }], // this is a Dalek have the same name as "tony" Human
+      earthFriends: [
+        {
+          id: 'john',
+          name: 'John Smith',
+          species: 'Time Lord',
+        },
+      ],
+    };
+
+    const $davros = ld.import(davrosData, 'Dalek', { overwrite: 'same-schema' });
+
+    expect(ld._nodes.size).toBe(8 + 4); // added 2 Dalek + 1 HumanArray + 1 DalekArray
+    expect($davros.id).toBe('Davros');
+
+    const $tonyDalek = toRef($davros.value.friends[0])!.node!;
+    const $john = toRef($davros.value.earthFriends[0])!.node!;
+
+    expect($john.id).toBe('john');
+    expect(ld.getNode('john')).toBe($john); // overwritten
+    expect(last$john).not.toBe($john);
+
+    expect($tonyDalek.id).not.toBe('tony'); // not overwritten
+    expect(ld.getNode('tony')).not.toBe($tonyDalek); // not overwritten
+    expect(ld.getNode('tony')).toBe(last$tony); // not overwritten
+
+    // -------------
+    // custom logic
+    // every Dalek except Davros, can be replaced with another same-id Dalek
+
+    const fakeDavros2Data = {
+      id: 'Davros',
+      friends: [{ id: $tonyDalek.id }],
+    };
+    const $davros2 = ld.import(fakeDavros2Data, 'Dalek', {
+      overwrite: (data, node, schema) => {
+        // secure overwrite only if node has same schema
+        if (schema !== node.schema) return false;
+
+        // a Davros can not be replaced with another Davros
+        if (schema.$id === 'Dalek' && node.id === 'Davros') return false;
+
+        // otherwise it's secure to overwrite
+        return true;
+      },
+    });
+
+    expect(ld.getNode('Davros')).not.toBe($davros2);
+    expect(ld.getNode('Davros')).toBe($davros); // not overwritten
+
+    expect(ld.getNode($tonyDalek.id)).not.toBe($tonyDalek); // id is taken by new tony Dalek
+
+    expect(ld._nodes.size).toBe(8 + 4 + 2); // added 1 Dalek (FakeDavros) + 1 DalekArray, overwrite 1 tonyDalek
+  });
+
   it('DataNode: store non-object value', () => {
     const ld = new LinkedData({ schemas });
 
@@ -190,5 +306,85 @@ describe('LinkedData', () => {
     expect(() => node2.value.bar).not.toThrow(); // as long as we don't read "0"
     expect(() => node2.value.bar[0]).toThrowError('void');
     expect(() => node2.export()).toThrowError('void');
+  });
+
+  it('DataNode: warn if not plain object', () => {
+    let counter = 0;
+    jest.spyOn(console, 'warn').mockImplementation((message: any) => {
+      if (typeof message === 'string' && message.includes('only accept plain')) counter++;
+    });
+    const ld = new LinkedData({});
+
+    class Temp {
+      constructor(public value: any) {}
+    }
+
+    const node1 = ld.import({ text: 'Hello World' });
+
+    const nodes: DataNode[] = [];
+
+    // ----------------------
+    // directly
+
+    counter = 0;
+    nodes.splice(0);
+    nodes.push(
+      // push lots of nodes
+      ld.import(new Temp(node1)),
+      ld.import(new Temp(node1.value)),
+      ld.import(new Temp(node1.ref)),
+    );
+
+    expect(counter).toBe(nodes.length);
+
+    for (const node of nodes) {
+      expect(node.value).toEqual({
+        // plain object, not a Temp instance anymore
+        value: { text: 'Hello World' },
+      });
+    }
+
+    // ----------------------
+    // indirectly
+
+    counter = 0;
+    const node2 = ld.import<any>({ temp: new Temp(node1) });
+    const node3 = ld.import<any>([new Temp(node1)]);
+    expect(counter).toBe(2);
+    expect(node2.value).toEqual({ temp: { value: { text: 'Hello World' } } }); // plain object, not a Temp instance anymore
+    expect(node3.value).toEqual([{ value: { text: 'Hello World' } }]); // same
+
+    // ----------------------
+    // continue writing
+
+    counter = 0;
+
+    node2.value.t2 = new Temp(node1);
+    node2.value.t3 = new Temp(node1.ref);
+    node2.value.t4 = new Temp(node1.value);
+    node2.value.t5 = { xxx: new Temp(node1.value), yyy: null };
+    node2.value.t5.yyy = new Temp(node1.ref);
+    node3.value.push(new Temp(node1));
+    node3.value.push(new Temp(node1.ref));
+    node3.value.push(new Temp(node1.value));
+
+    expect(counter).toBe(8);
+
+    expect(node2.value).toEqual({
+      temp: { value: { text: 'Hello World' } },
+      t2: { value: { text: 'Hello World' } }, // plain object
+      t3: { value: { text: 'Hello World' } }, // plain object
+      t4: { value: { text: 'Hello World' } }, // plain object
+      t5: {
+        xxx: { value: { text: 'Hello World' } }, // plain object
+        yyy: { value: { text: 'Hello World' } }, // plain object
+      },
+    });
+    expect(node3.value).toEqual([
+      { value: { text: 'Hello World' } },
+      { value: { text: 'Hello World' } }, // plain object
+      { value: { text: 'Hello World' } }, // plain object
+      { value: { text: 'Hello World' } }, // plain object
+    ]);
   });
 });

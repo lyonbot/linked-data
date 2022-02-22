@@ -3,6 +3,7 @@ import { isObject, mapValues } from './utils';
 import { getNormalObjectProxy } from './normalObjectProxy';
 import { toRef, isDataNodeRef, DataNodeRef, $getDataNode } from './DataNodeRef';
 import { transformRaw } from './transformRaw';
+import { VOID_NODE_ERROR, warnIfNotPlainObject } from './warnings';
 
 /**
  * @public
@@ -12,8 +13,23 @@ export interface LinkedDataOptions {
 }
 
 /**
+ * @public
+ */
+export interface LinkedDataImportOptions {
+  /**
+   * while importing, if source data indicated a id, but it is taken by a existing DataNode, shall we rewrite it?
+   *
+   * - `never` - (default) do not overwrite. a new id will be generated.
+   * - `same-schema` - overwrite if the source data has the same schema, otherwise make a new id.
+   * - `always` - (dangerous) always overwrite regardless of the source data's schema
+   * - a function to decide whether to overwrite. if return `false`, a new id will be generated.
+   */
+  overwrite?: 'same-schema' | 'always' | 'never' | ((data: any, existingNode: DataNode, schema: Schema) => boolean);
+}
+
+/**
  * All you need is this node manager.
- * 
+ *
  * @public
  */
 export class LinkedData {
@@ -35,7 +51,7 @@ export class LinkedData {
    * @param schema - the schema name of current value
    * @returns
    */
-  import<T = any>(value: T, schema?: string | Schema | null) {
+  import<T = any>(value: T, schema?: string | Schema | null, options?: LinkedDataImportOptions) {
     const actualSchema = this.schemas.get(schema);
 
     const existingNode = toRef(value)?.node;
@@ -46,11 +62,29 @@ export class LinkedData {
 
     // the id from raw value, which might duplicate
     const presetId = actualSchema && actualSchema.type === 'object' && actualSchema.readKey(value);
-    const id = this.allocateId(presetId ?? (actualSchema && actualSchema.$id));
+    let id = presetId !== void 0 ? String(presetId) : '';
+
+    const sameIdNode = id && this._nodes.get(id);
+    if (sameIdNode) {
+      let overwrite = options?.overwrite || 'never';
+
+      if (overwrite === 'same-schema') {
+        overwrite = sameIdNode.schema === actualSchema ? 'always' : 'never';
+      }
+
+      if (typeof overwrite === 'function') {
+        // sameIdNode is not-falsy, implicitly means actualSchema is not-falsy
+        overwrite = overwrite(value, sameIdNode, actualSchema!) ? 'always' : 'never';
+      }
+
+      if (overwrite === 'never') id = '';
+    }
+
+    if (!id) id = this.allocateId(presetId ?? (actualSchema && actualSchema.$id));
 
     const node = new DataNode(this, id, actualSchema);
     this._nodes.set(id, node);
-    node.setValue(value);
+    node.setValue(value, options);
     return node as DataNode<T>;
   }
 
@@ -91,7 +125,6 @@ export const enum DataNodeStatus {
   FILLED_WITH_ARRAY,
 }
 
-const VOID_NODE_ERROR = 'DataNode is void, please set value before using';
 const $SET_TO_VOID = Symbol('$SET_TO_VOID');
 
 /**
@@ -109,7 +142,7 @@ export class DataNode<T = any> {
    *
    * this will NOT contain `DataNode` or Proxy from DataNode
    */
-  _raw?: any;
+  raw?: any;
 
   /** the proxy. exists when status is FILLED_WITH_OBJECT or FILLED_WITH_ARRAY */
   _proxy?: any;
@@ -121,7 +154,7 @@ export class DataNode<T = any> {
     this.owner = owner;
     this.id = id;
     this.schema = schema;
-    this.ref = new DataNodeRef(this);
+    this.ref = new DataNodeRef(owner, id);
   }
 
   /**
@@ -135,7 +168,7 @@ export class DataNode<T = any> {
    * export a plain JSON object / array, which might contains circular reference.
    */
   export(): T {
-    return transformRaw(this._raw, {
+    return transformRaw(this.raw, {
       createDest(raw, node) {
         if (node && node.status === DataNodeStatus.VOID) {
           throw new Error(VOID_NODE_ERROR);
@@ -156,47 +189,27 @@ export class DataNode<T = any> {
    */
   get value(): T {
     if (this.status === DataNodeStatus.VOID) throw new Error(VOID_NODE_ERROR);
-    if (this.status === DataNodeStatus.FILLED_WITH_ANY) return this._raw;
-    if (this.status === DataNodeStatus.FILLED_WITH_REF) return (this._raw as DataNodeRef).node.value;
+    if (this.status === DataNodeStatus.FILLED_WITH_ANY) return this.raw;
+    if (this.status === DataNodeStatus.FILLED_WITH_REF) return (this.raw as DataNodeRef).node.value;
 
-    return this._proxy || (this._proxy = this._makeProxy());
+    return this._proxy || (this._proxy = makeProxyForNode(this));
   }
 
   set value(v: T) {
     this.setValue(v);
   }
 
-  private _makeProxy() {
-    return new Proxy(this._raw, {
-      get: (target, key) => {
-        if (key === $getDataNode) return this;
-
-        const v = Reflect.get(target, key);
-        if (!isObject(v)) return v;
-        if (isDataNodeRef(v)) return v.node.value;
-        return getNormalObjectProxy(v);
-      },
-      set: (target, key, value) => {
-        if (typeof key === 'symbol') return Reflect.set(target, key, value);
-
-        const fieldSchema = this.schema?.get(key);
-        if (fieldSchema) value = this.owner.import(value, fieldSchema);
-
-        const ref = toRef(value);
-        if (ref) value = ref; // TODO: schema constrain check?
-
-        target[key] = value;
-        return true;
-      },
-    });
-  }
-
-  setValue(value: T) {
+  /**
+   * set the value
+   *
+   * @param importOptions - optional, see LinkedData.import
+   */
+  setValue(value: T, importOptions: LinkedDataImportOptions = {}) {
     this._proxy = void 0;
 
     // special mark
     if ((value as unknown) === $SET_TO_VOID) {
-      this._raw = void 0;
+      this.raw = void 0;
       this.status = DataNodeStatus.VOID;
       return;
     }
@@ -204,7 +217,7 @@ export class DataNode<T = any> {
     // if not object, just store as-is
 
     if (!isObject(value)) {
-      this._raw = value;
+      this.raw = value;
       this.status = DataNodeStatus.FILLED_WITH_ANY;
       return;
     }
@@ -214,30 +227,18 @@ export class DataNode<T = any> {
 
     const ref = toRef(value);
     if (ref) {
-      this._raw = ref;
+      this.raw = ref;
       this.status = DataNodeStatus.FILLED_WITH_REF;
       return;
     }
 
-    // not deeply process properties / items
+    // now `value` is an object / array
+    // deeply process properties / items
 
-    const owner = this.owner;
-    const schema = this.schema;
-    const cloneAndClean = (x: any) => {
-      const ref = toRef(x);
-      if (ref) return ref;
-      return mapValues(x, cloneAndClean);
-    };
+    warnIfNotPlainObject(value);
 
     this.status = Array.isArray(value) ? DataNodeStatus.FILLED_WITH_ARRAY : DataNodeStatus.FILLED_WITH_OBJECT;
-    this._raw = mapValues(value, (value: any, key: any) => {
-      const propSchema = schema && schema.get(key);
-      if (!propSchema) return cloneAndClean(value); // no need to create
-
-      const ref = toRef(value);
-      if (ref && ref.node.schema !== propSchema) throw new Error('Cannot refer Node whose schema mismatches');
-      return ref || owner.import(value, propSchema).ref;
-    });
+    this.raw = mapValues(value, (v, k) => convertBeforeWriteField(this, v, k, importOptions));
   }
 
   /**
@@ -246,4 +247,49 @@ export class DataNode<T = any> {
   setVoid() {
     this.setValue($SET_TO_VOID as any);
   }
+}
+
+/**
+ * deep clone a value, transform all `DataNodeRef`, `DataNode` and Proxy to `DataNodeRef`
+ *
+ * @internal
+ */
+export function deeplyCloneAndNormalizeRefs(x: any) {
+  if (!isObject(x)) return x;
+
+  const ref = toRef(x);
+  if (ref) return ref;
+
+  warnIfNotPlainObject(x);
+  return mapValues(x, deeplyCloneAndNormalizeRefs);
+}
+
+function makeProxyForNode(node: DataNode) {
+  return new Proxy(node.raw, {
+    get: (target, key) => {
+      if (key === $getDataNode) return node;
+
+      const v = Reflect.get(target, key);
+      if (!isObject(v)) return v;
+      if (isDataNodeRef(v)) return v.node?.value;
+      return getNormalObjectProxy(v);
+    },
+    set: (target, key, value) => {
+      /* istanbul ignore next */
+      if (typeof key === 'symbol') throw new Error(`Do not use symbol property`);
+
+      target[key] = convertBeforeWriteField(node, value, key);
+      return true;
+    },
+  });
+}
+
+function convertBeforeWriteField(node: DataNode, value: any, key: any, importOptions?: LinkedDataImportOptions): any {
+  const propSchema = node.schema?.get(key);
+  if (!propSchema) return deeplyCloneAndNormalizeRefs(value); // no need to create another Node
+
+  const ref = toRef(value);
+  if (ref && ref.node.schema !== propSchema) throw new Error('Cannot refer Node whose schema mismatches');
+
+  return ref || node.owner.import(value, propSchema, importOptions).ref;
 }

@@ -1,13 +1,20 @@
 import { isObject } from './utils';
-import type { DataNode } from './LinkedData';
+import type { DataNode, LinkedData } from './LinkedData';
+import { BROKEN_REF_ERROR } from './warnings';
 
 /**
  * a placeholder for a reference to a DataNode
- * 
+ *
  * @public
  */
 export class DataNodeRef {
-  constructor(public node: DataNode) {}
+  constructor(public owner: LinkedData, public id: string) {}
+
+  get node() {
+    const result = this.owner.getNode(this.id);
+    if (!result) throw new Error(BROKEN_REF_ERROR)
+    return result;
+  }
 }
 
 /**

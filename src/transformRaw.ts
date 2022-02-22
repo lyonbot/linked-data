@@ -23,7 +23,7 @@ export function transformRaw(entryRaw: DataNodeRef | any, options: TransformOpti
     // TODO: detect ref -> ref -> ref cycle
     for (let ref = toRef(raw); ref; ref = toRef(raw)) {
       node = ref.node;
-      raw = node._raw;
+      raw = node.raw;
     }
     if (cache.has(raw)) return cache.get(raw);
 

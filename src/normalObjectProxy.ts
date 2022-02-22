@@ -1,5 +1,6 @@
 import { isObject } from './utils';
-import { isDataNodeRef, toRef } from './DataNodeRef';
+import { isDataNodeRef } from './DataNodeRef';
+import { deeplyCloneAndNormalizeRefs } from './LinkedData';
 
 /**
  * create a proxy factory, which can safely hide DataNodeRef from users
@@ -11,7 +12,7 @@ import { isDataNodeRef, toRef } from './DataNodeRef';
  */
 export const makeRefGuardProxyFactory = () => {
   const toProxy = (obj: any) => {
-    if (!isObject) return obj;
+    if (!isObject(obj)) return obj;
     if (cached.has(obj)) return cached.get(obj);
 
     const proxy = new Proxy(obj, proxyHandler);
@@ -23,13 +24,12 @@ export const makeRefGuardProxyFactory = () => {
     get(target, prop) {
       const value = Reflect.get(target, prop);
       if (isDataNodeRef(value)) return value.node.value;
-      return value;
+      return toProxy(value);
     },
     set(target, prop, value) {
-      const ref = toRef(value);
-      if (ref) {
+      value = deeplyCloneAndNormalizeRefs(value);
+      if (isDataNodeRef(value)) {
         if (prop === 'length' && Array.isArray(target)) throw new Error("Cannot use DataNodeRef as array's length");
-        value = ref;
       }
 
       return Reflect.set(target, prop, value);

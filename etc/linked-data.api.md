@@ -43,12 +43,11 @@ export class DataNode<T = any> {
     // (undocumented)
     readonly owner: LinkedData;
     _proxy?: any;
-    _raw?: any;
+    raw?: any;
     readonly ref: DataNodeRef;
     // (undocumented)
     readonly schema: Schema | null;
-    // (undocumented)
-    setValue(value: T): void;
+    setValue(value: T, importOptions?: LinkedDataImportOptions): void;
     setVoid(): void;
     // (undocumented)
     status: DataNodeStatus;
@@ -58,9 +57,13 @@ export class DataNode<T = any> {
 
 // @public
 export class DataNodeRef {
-    constructor(node: DataNode);
+    constructor(owner: LinkedData, id: string);
     // (undocumented)
-    node: DataNode;
+    id: string;
+    // (undocumented)
+    get node(): DataNode<any>;
+    // (undocumented)
+    owner: LinkedData;
 }
 
 // @public (undocumented)
@@ -84,6 +87,9 @@ export const isDataNodeRef: (value: any) => value is DataNodeRef;
 export function isObject(value: any): value is Record<string | number | symbol, any>;
 
 // @public
+export function isPlainObject(value: any): value is Record<string | number | symbol, any>;
+
+// @public
 export class LinkedData {
     constructor(options: LinkedDataOptions);
     // (undocumented)
@@ -95,13 +101,18 @@ export class LinkedData {
     }): DataNode<T>;
     // (undocumented)
     getNode(id: string): DataNode<any> | undefined;
-    import<T = any>(value: T, schema?: string | Schema | null): DataNode<T>;
+    import<T = any>(value: T, schema?: string | Schema | null, options?: LinkedDataImportOptions): DataNode<T>;
     // (undocumented)
     _nodes: Map<string, DataNode>;
     // (undocumented)
     prune(preservingNodes?: (string | DataNode)[]): void;
     // (undocumented)
     schemas: SchemaContext;
+}
+
+// @public (undocumented)
+export interface LinkedDataImportOptions {
+    overwrite?: 'same-schema' | 'always' | 'never' | ((data: any, existingNode: DataNode, schema: Schema) => boolean);
 }
 
 // @public (undocumented)

@@ -74,9 +74,27 @@ export function isObject(value: any): value is Record<string | number | symbol, 
 }
 
 /**
+ * check if a value is plain object / array, not a class instance
+ *
+ * this will read object's prototype
+ *
+ * @public
+ */
+export function isPlainObject(value: any): value is Record<string | number | symbol, any> {
+  if (!isObject(value)) return false;
+
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === Array.prototype || !proto;
+}
+
+/**
  * if input is array, this is identical to `Array#map`
  *
  * if input is object, this transform values.
+ *
+ * if input is a class instance, the return value will be a plain object.
+ *
+ * otherwise, return input as-is
  *
  * @public
  */
@@ -84,7 +102,7 @@ export function mapValues(objOrArray: any, mapper: (value: any, key: string | nu
   if (!isObject(objOrArray)) return objOrArray;
   if (Array.isArray(objOrArray)) return objOrArray.map(mapper);
   return Object.keys(objOrArray).reduce((p, k) => {
-    p[k] = mapper(objOrArray[k], k, p);
+    p[k] = mapper(objOrArray[k], k, objOrArray);
     return p;
   }, {} as Record<string, any>);
 }
