@@ -9,7 +9,7 @@ Load and edit linked data easily
 Let's say we have such nested data:
 
 ```js
-const data = {
+const originalData = {
   type: 'card',
   theme: 'black',
   children: [
@@ -39,7 +39,7 @@ const schemas = {
 };
 ```
 
-We can convert the data it into lots of connected nodes, following the schema relations. 
+We can convert the data it into lots of connected nodes, following the schema relations.
 
 ![](./images/example1.drawio.svg)
 
@@ -50,7 +50,13 @@ We want to manipulate *Node*s easily and get mutations easily.
 It is tedious to manipulating the separated node list. People prefer to manipulate the original nested data.
 
 ```js
+const linkedData = new LinkedData({ schemas });
+const cardNode = linkedData.import(originalData, 'Component');
+
 // card is the in original nested structure
+// which can be mutated
+
+const card = cardNode.value;
 
 card.theme = 'light';
 card.children.push('another text');
@@ -61,17 +67,9 @@ button.children.push({ type: 'icon', icon: 'caret-right' });
 // card is modified now
 ```
 
-And we want to gather and describe the procedure :
+With LinkedData and DataNode's magic, the following procedure will be deduced:
 
-0. modify **card.theme** set to `'light'`
-
-1. create **unnamed_text_3** = `'another text'`
-
-2. modify **entry.children** append `$ref(unnamed_text_3)` 🔗
-
-3. create **unnamed_icon** = `{ type: 'icon', icon: 'caret-right' }`
-
-4. modify **openBtn.children** append `$ref(unnamed_icon)` 🔗
+![](./images/example2.drawio.svg)
 
 ### Mutable & Immutable
 
