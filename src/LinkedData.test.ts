@@ -197,7 +197,7 @@ describe('LinkedData', () => {
     expect($tony2.id).not.toBe('tony');
 
     const $tony3 = ld.import(tonyData, 'Human', { overwrite: 'always' });
-    expect(ld._nodes.size).toBe(8); // old nodes are overwritten
+    expect(ld._nodes.size).toBe(8 + 1); // old nodes are overwritten, but arrays are always recreated
     expect($tony3.id).toBe('tony');
     expect($tony3).not.toBe($tony);
     expect(ld.getNode('tony')).toBe($tony3);
@@ -223,7 +223,7 @@ describe('LinkedData', () => {
 
     const $davros = ld.import(davrosData, 'Dalek', { overwrite: 'same-schema' });
 
-    expect(ld._nodes.size).toBe(8 + 4); // added 2 Dalek + 1 HumanArray + 1 DalekArray
+    expect(ld._nodes.size).toBe(9 + 4); // added 2 Dalek + 1 HumanArray + 1 DalekArray
     expect($davros.id).toBe('Davros');
 
     const $tonyDalek = toRef($davros.value.friends[0])!.node!;
@@ -263,7 +263,7 @@ describe('LinkedData', () => {
 
     expect(ld.getNode($tonyDalek.id)).not.toBe($tonyDalek); // id is taken by new tony Dalek
 
-    expect(ld._nodes.size).toBe(8 + 4 + 2); // added 1 Dalek (FakeDavros) + 1 DalekArray, overwrite 1 tonyDalek
+    expect(ld._nodes.size).toBe(9 + 4 + 2); // added 1 Dalek (FakeDavros) + 1 DalekArray, overwrite 1 tonyDalek
   });
 
   it('DataNode: store non-object value', () => {
@@ -280,6 +280,64 @@ describe('LinkedData', () => {
     textNode.value = 'Awesome';
     expect(msgNode.value).toEqual({ text: 'Awesome' });
     expect(exported).toEqual({ text: "I'm a string" }); // old exported data is not affected
+  });
+
+  it('DataNode: export with(out) key', () => {
+    const ld = new LinkedData({ schemas });
+
+    const root = ld.import<any>(
+      {
+        text: 'test',
+        replies: [{ text: 'test2' }, { text: 'test3' }],
+      },
+      'Message',
+    );
+
+    expect(root.export()).toEqual({
+      text: 'test',
+      replies: [{ text: 'test2' }, { text: 'test3' }],
+    });
+
+    expect(root.export({ writeKey: true })).toEqual({
+      id: expect.any(String),
+      text: 'test',
+      replies: [
+        {
+          id: expect.any(String),
+          text: 'test2',
+        },
+        {
+          id: expect.any(String),
+          text: 'test3',
+        },
+      ],
+    });
+
+    expect(
+      root.export({
+        writeKey: node => node.value.text !== 'test2',
+      }),
+    ).toEqual({
+      id: expect.any(String),
+      text: 'test',
+      replies: [
+        {
+          // id: expect.any(String),
+          text: 'test2',
+        },
+        {
+          id: expect.any(String),
+          text: 'test3',
+        },
+      ],
+    });
+
+    // if Node's value have a "id" property, and writeKey is true
+    // the "id" from value will be overridden
+    root.value.id = 'this will be overridden';
+    const exported = root.export({ writeKey: true });
+    expect(exported.id).not.toEqual('this will be overridden');
+    expect(exported.id).toEqual(root.id);
   });
 
   it('DataNode: void node', () => {

@@ -24,8 +24,21 @@ export interface ObjectSchemaDescriptor {
   key?:
     | string
     | {
-        import: string | ((raw: any) => any);
-        export: string | ((dest: any, key: string) => void);
+        /**
+         * custom function to generate a key.
+         *
+         * @param raw - raw data to fill this node, can be object and non-object
+         * @returns the key (string), or `undefined` to allow system generate one
+         */
+        import: string | ((raw: any) => string | undefined | void);
+        /**
+         * custom function to write key into the exported data.
+         *
+         * @param dest - destination, always a object
+         * @param id - the identifier (string) to write
+         * @example - (dest, id) => { dest['_id'] = id; }
+         */
+        export: string | ((dest: any, id: string) => void);
       };
 }
 
@@ -128,14 +141,14 @@ export class SchemaContext {
 
 /**
  * Schema instance. Derived from SchemaDescriptor, with few extra useful methods.
- * 
+ *
  * @public
  */
 export type Schema = ObjectSchema | ArraySchema;
 
 /**
  * ObjectSchema instance. Derived from ObjectSchemaDescriptor, with few extra useful methods.
- * 
+ *
  * @public
  */
 export class ObjectSchema extends makeDataClass<Required<ObjectSchemaDescriptor>>() {
@@ -202,10 +215,11 @@ export class ObjectSchema extends makeDataClass<Required<ObjectSchemaDescriptor>
   }
 
   writeKey(dest: any, key: any): void {
+    if (!isObject(dest)) return;
     const write = isObject(this.key) ? this.key.export : this.key;
 
     if (typeof write === 'string') {
-      if (isObject(dest)) dest[write] = key;
+      dest[write] = key;
     } else {
       write(dest, key);
     }
@@ -214,7 +228,7 @@ export class ObjectSchema extends makeDataClass<Required<ObjectSchemaDescriptor>
 
 /**
  * ArraySchema instance. Derived from ArraySchemaDescriptor, with few extra useful methods.
- * 
+ *
  * @public
  */
 export class ArraySchema extends makeDataClass<Required<ArraySchemaDescriptor>>() {
@@ -248,6 +262,9 @@ export class ArraySchema extends makeDataClass<Required<ArraySchemaDescriptor>>(
       return this.get(key[0])?.get(key.slice(1)) || null;
     }
 
-    return this.items;
+    const toNum = +key;
+    if (toNum >= 0 && Number.isInteger(toNum)) return this.items;
+
+    return null;
   }
 }

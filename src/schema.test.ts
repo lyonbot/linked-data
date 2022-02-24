@@ -95,7 +95,8 @@ describe('Schema', () => {
   it('ObjectSchema: keying: custom procedure', () => {
     const read = jest.fn((raw: any) => (isObject(raw) ? raw.id : void 0));
     const write = jest.fn((dest: any, id: any) => {
-      if (isObject(dest)) dest.id = id;
+      expect(typeof dest).toBe('object') // non-object dest will not be called
+      dest.id = id;
     });
 
     const schemas = new SchemaContext({
@@ -122,7 +123,7 @@ describe('Schema', () => {
     Message.writeKey(null, 1234);
 
     expect(read).toBeCalledTimes(4);
-    expect(write).toBeCalledTimes(2);
+    expect(write).toBeCalledTimes(1); // non-object dest will not be called
   });
 
   it('ObjectSchema: change schema on the fly', () => {

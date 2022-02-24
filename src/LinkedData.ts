@@ -62,7 +62,7 @@ export class LinkedData {
 
     // the id from raw value, which might duplicate
     const presetId = actualSchema && actualSchema.type === 'object' && actualSchema.readKey(value);
-    let id = presetId !== void 0 ? String(presetId) : '';
+    let id = presetId && presetId !== 0 ? String(presetId) : '';
 
     const sameIdNode = id && this._nodes.get(id);
     if (sameIdNode) {
@@ -107,10 +107,6 @@ export class LinkedData {
     let currentId = prefix;
     for (let index = 1; this._nodes.has(currentId); index++, currentId = prefix + index);
     return currentId;
-  }
-
-  prune(preservingNodes?: (string | DataNode)[]) {
-    // TODO
   }
 }
 
@@ -167,8 +163,17 @@ export class DataNode<T = any> {
   /**
    * export a plain JSON object / array, which might contains circular reference.
    */
-  export(): T {
-    return transformRaw(this.raw, {
+  export(options?: {
+    /**
+     * optional, default: false
+     *
+     * if true, the output objects will have extra `_id` (or other name depend on schema) property
+     */
+    writeKey?: boolean | ((node: DataNode) => boolean);
+  }): T {
+    const writeKey = options && options.writeKey;
+
+    return transformRaw(this.ref, {
       createDest(raw, node) {
         if (node && node.status === DataNodeStatus.VOID) {
           throw new Error(VOID_NODE_ERROR);
@@ -178,10 +183,46 @@ export class DataNode<T = any> {
         if (Array.isArray(raw)) return new Array(raw.length);
         return {};
       },
-      fillDest({ dest, prepared }) {
-        Object.assign(dest, prepared);
+      fillDest({ dest, recipe, node }) {
+        Object.assign(dest, recipe);
+
+        if (
+          node &&
+          node.schema &&
+          node.schema.type === 'object' &&
+          writeKey &&
+          (typeof writeKey !== 'function' || writeKey(node))
+        ) {
+          node.schema.writeKey(dest, node.id);
+        }
       },
     });
+  }
+
+  /**
+   * iterate and visit every node.
+   *
+   * @param visitor
+   */
+  iterate(visitor: (node: DataNode, path: (string | number)[]) => void | 'abort' | 'skip') {
+    const $abort = Symbol('abort');
+    try {
+      transformRaw(this.ref, {
+        createDest(raw, node, path) {
+          if (!node) return raw;
+
+          const ans = visitor(node, path);
+
+          if (ans === 'abort') throw $abort;
+          if (ans === 'skip') return transformRaw.final(null);
+
+          return raw;
+        },
+        fillDest: () => void 0,
+      });
+    } catch (e) {
+      if (e !== $abort) throw e;
+    }
   }
 
   /**
