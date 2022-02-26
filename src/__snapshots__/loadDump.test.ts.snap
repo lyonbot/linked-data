@@ -8,7 +8,7 @@ Object {
       "raw": Array [
         "[[[ ref ]]] #0 -> bar",
         "[[[ ref ]]] #1 -> baz",
-        "[[[ ref ]]] #2 -> foo2",
+        "[[[ ref ]]] #2 -> foo.1",
         "[[[ ref ]]] #3 -> foo",
       ],
       "referredBy": Array [
@@ -36,7 +36,7 @@ Object {
           "path": Array [
             2,
           ],
-          "targetNodeId": "foo2",
+          "targetNodeId": "foo.1",
         },
         Object {
           "path": Array [
@@ -106,8 +106,8 @@ Object {
       ],
       "schemaId": "Message",
     },
-    "foo2": Object {
-      "id": "foo2",
+    "foo.1": Object {
+      "id": "foo.1",
       "raw": Object {
         "id": "foo",
         "text": "Hey?",
@@ -139,7 +139,7 @@ Object {
       "raw": Array [
         "[[[ ref ]]] #0 -> bar",
         "[[[ ref ]]] #1 -> baz",
-        "[[[ ref ]]] #2 -> foo2",
+        "[[[ ref ]]] #2 -> foo.1",
         "[[[ ref ]]] #3 -> foo",
       ],
       "referredBy": Array [
@@ -167,7 +167,7 @@ Object {
           "path": Array [
             2,
           ],
-          "targetNodeId": "foo2",
+          "targetNodeId": "foo.1",
         },
         Object {
           "path": Array [
@@ -237,10 +237,10 @@ Object {
       ],
       "schemaId": "Message",
     },
-    "foo2": Object {
-      "id": "foo2",
+    "foo.1": Object {
+      "id": "foo.1",
       "raw": Object {
-        "id": "foo2",
+        "id": "foo.1",
         "text": "Hey?",
       },
       "referredBy": Array [
@@ -265,20 +265,20 @@ Object {
 exports[`loadDump should work: loaded 1`] = `
 Object {
   "nodeInfos": Object {
-    "_node3": Object {
-      "id": "_node3",
+    "_node.2": Object {
+      "id": "_node.2",
       "raw": Array [
-        "[[[ ref ]]] #0 -> bar2",
-        "[[[ ref ]]] #1 -> baz2",
-        "[[[ ref ]]] #2 -> foo22",
-        "[[[ ref ]]] #3 -> foo3",
+        "[[[ ref ]]] #0 -> bar.1",
+        "[[[ ref ]]] #1 -> baz.1",
+        "[[[ ref ]]] #2 -> foo.3",
+        "[[[ ref ]]] #3 -> foo.2",
       ],
       "referredBy": Array [
         Object {
           "path": Array [
             "replies",
           ],
-          "sourceNodeId": "foo3",
+          "sourceNodeId": "foo.2",
         },
       ],
       "refs": Array [
@@ -286,31 +286,31 @@ Object {
           "path": Array [
             0,
           ],
-          "targetNodeId": "bar2",
+          "targetNodeId": "bar.1",
         },
         Object {
           "path": Array [
             1,
           ],
-          "targetNodeId": "baz2",
+          "targetNodeId": "baz.1",
         },
         Object {
           "path": Array [
             2,
           ],
-          "targetNodeId": "foo22",
+          "targetNodeId": "foo.3",
         },
         Object {
           "path": Array [
             3,
           ],
-          "targetNodeId": "foo3",
+          "targetNodeId": "foo.2",
         },
       ],
       "schemaId": "#/Message/replies",
     },
-    "bar2": Object {
-      "id": "bar2",
+    "bar.1": Object {
+      "id": "bar.1",
       "raw": Object {
         "id": "bar",
         "text": "Hi",
@@ -320,14 +320,14 @@ Object {
           "path": Array [
             0,
           ],
-          "sourceNodeId": "_node3",
+          "sourceNodeId": "_node.2",
         },
       ],
       "refs": Array [],
       "schemaId": "Message",
     },
-    "baz2": Object {
-      "id": "baz2",
+    "baz.1": Object {
+      "id": "baz.1",
       "raw": Object {
         "id": "baz",
         "text": "Bye",
@@ -337,34 +337,17 @@ Object {
           "path": Array [
             1,
           ],
-          "sourceNodeId": "_node3",
+          "sourceNodeId": "_node.2",
         },
       ],
       "refs": Array [],
       "schemaId": "Message",
     },
-    "foo22": Object {
-      "id": "foo22",
-      "raw": Object {
-        "id": "foo2",
-        "text": "Hey?",
-      },
-      "referredBy": Array [
-        Object {
-          "path": Array [
-            2,
-          ],
-          "sourceNodeId": "_node3",
-        },
-      ],
-      "refs": Array [],
-      "schemaId": "Message",
-    },
-    "foo3": Object {
-      "id": "foo3",
+    "foo.2": Object {
+      "id": "foo.2",
       "raw": Object {
         "id": "foo",
-        "replies": "[[[ ref ]]] #0 -> _node3",
+        "replies": "[[[ ref ]]] #0 -> _node.2",
         "text": "Hello",
       },
       "referredBy": Array [
@@ -372,7 +355,7 @@ Object {
           "path": Array [
             3,
           ],
-          "sourceNodeId": "_node3",
+          "sourceNodeId": "_node.2",
         },
       ],
       "refs": Array [
@@ -380,9 +363,26 @@ Object {
           "path": Array [
             "replies",
           ],
-          "targetNodeId": "_node3",
+          "targetNodeId": "_node.2",
         },
       ],
+      "schemaId": "Message",
+    },
+    "foo.3": Object {
+      "id": "foo.3",
+      "raw": Object {
+        "id": "foo.1",
+        "text": "Hey?",
+      },
+      "referredBy": Array [
+        Object {
+          "path": Array [
+            2,
+          ],
+          "sourceNodeId": "_node.2",
+        },
+      ],
+      "refs": Array [],
       "schemaId": "Message",
     },
   },

@@ -1,0 +1,187 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getPatches basically works 1`] = `
+Array [
+  Object {
+    "indexMap": Array [
+      1,
+      2,
+      -1,
+    ],
+    "op": "resortArray",
+    "path": Array [
+      "foo",
+    ],
+  },
+  Object {
+    "op": "set",
+    "path": Array [
+      "foo",
+      2,
+    ],
+    "value": 3,
+  },
+  Object {
+    "op": "set",
+    "path": Array [
+      "bar",
+      "baz",
+    ],
+    "value": "baz",
+  },
+  Object {
+    "op": "set",
+    "path": Array [
+      "bar",
+      "newest",
+    ],
+    "value": "newest",
+  },
+  Object {
+    "op": "delete",
+    "path": Array [
+      "bar",
+      "deleted",
+    ],
+  },
+]
+`;
+
+exports[`getPatches basically works 2`] = `
+Array [
+  Object {
+    "op": "set",
+    "path": Array [
+      "bar",
+      "deleted",
+    ],
+    "value": "I am removed",
+  },
+  Object {
+    "op": "delete",
+    "path": Array [
+      "bar",
+      "newest",
+    ],
+  },
+  Object {
+    "op": "set",
+    "path": Array [
+      "bar",
+      "baz",
+    ],
+    "value": "old baz",
+  },
+  Object {
+    "indexMap": Array [
+      -1,
+      0,
+      1,
+    ],
+    "op": "resortArray",
+    "path": Array [
+      "foo",
+    ],
+  },
+  Object {
+    "op": "set",
+    "path": Array [
+      "foo",
+      0,
+    ],
+    "value": 0,
+  },
+]
+`;
+
+exports[`getPatches resorted objects 1`] = `
+Array [
+  Object {
+    "indexMap": Array [
+      -1,
+      2,
+      1,
+      0,
+    ],
+    "op": "resortArray",
+    "path": Array [],
+  },
+  Object {
+    "op": "set",
+    "path": Array [
+      0,
+    ],
+    "value": Object {
+      "x": 0,
+    },
+  },
+  Object {
+    "op": "set",
+    "path": Array [
+      3,
+      "x",
+    ],
+    "value": 3,
+  },
+]
+`;
+
+exports[`getPatches resorted objects 2`] = `
+Array [
+  Object {
+    "op": "set",
+    "path": Array [
+      3,
+      "x",
+    ],
+    "value": -3,
+  },
+  Object {
+    "indexMap": Array [
+      3,
+      2,
+      1,
+      -1,
+    ],
+    "op": "resortArray",
+    "path": Array [],
+  },
+  Object {
+    "op": "set",
+    "path": Array [
+      3,
+    ],
+    "value": Object {
+      "y": 555,
+    },
+  },
+]
+`;
+
+exports[`getPatches whole replaced 1`] = `
+Array [
+  Object {
+    "op": "set",
+    "path": Array [],
+    "value": Object {
+      "foo": Array [
+        1,
+        2,
+        3,
+      ],
+    },
+  },
+]
+`;
+
+exports[`getPatches whole replaced 2`] = `
+Array [
+  Object {
+    "op": "set",
+    "path": Array [],
+    "value": Object {
+      "hey": "yo",
+    },
+  },
+]
+`;

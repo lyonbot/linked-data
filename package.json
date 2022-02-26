@@ -9,7 +9,7 @@
     "test": "jest",
     "lint": "eslint --ext ts,tsx .",
     "clean": "rimraf dist lib temp coverage tsconfig.tsbuildinfo",
-    "xx:esbuild": "esbuild --bundle lib/index.js --minify --sourcemap",
+    "xx:esbuild": "esbuild --bundle lib/index.js --minify --sourcemap --external:tiny-typed-emitter",
     "build": "run-s -l build:ts && run-p -l build:bundle build:types",
     "build:ts": "tsc -b .",
     "build:types": "api-extractor run --local",
@@ -52,5 +52,8 @@
     "rimraf": "^3.0.2",
     "ts-jest": "^27.1.2",
     "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "tiny-typed-emitter": "^2.1.0"
   }
 }

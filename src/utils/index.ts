@@ -1,3 +1,5 @@
+export { memoWithWeakMap } from './memoWithWeakMap';
+
 /**
  * Convert a class constructor to a factory function.
  *
@@ -105,4 +107,34 @@ export function mapValues(objOrArray: any, mapper: (value: any, key: string | nu
     p[k] = mapper(objOrArray[k], k, objOrArray);
     return p;
   }, {} as Record<string, any>);
+}
+
+/**
+ * @returns
+ */
+export function forEach(objOrArray: any, iter: (value: any, key: string | number, whole: any) => any) {
+  if (!isObject(objOrArray)) return;
+  if (Array.isArray(objOrArray)) return objOrArray.forEach(iter);
+  Object.keys(objOrArray).forEach(k => {
+    iter(objOrArray[k], k, objOrArray);
+  });
+}
+
+export function shallowClone<T = any>(x: T): T {
+  if (typeof x !== 'object' || x === null) return x;
+  if (Array.isArray(x)) return x.slice() as unknown as T;
+  return Object.assign({}, x);
+}
+
+export function cloneDeep(x: any, opts?: { freeze?: boolean }): any {
+  if (typeof x !== 'object' || x === null) return x;
+  const ans = mapValues(x, v => cloneDeep(v, opts));
+  if (opts && opts.freeze) Object.freeze(ans);
+  return ans;
+}
+
+export function toArray<T = any>(src: T | Iterable<T | null | undefined> | null | undefined): T[] {
+  if (!src) return [];
+  if (Symbol.iterator in src) return Array.from(src as any).filter(Boolean) as T[];
+  return [src] as T[];
 }

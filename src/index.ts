@@ -1,8 +1,24 @@
 /* istanbul ignore file */
 
 export { LinkedData, DataNode, DataNodeStatus } from './LinkedData';
+export type { LinkedDataOptions, LinkedDataEvents, LinkedDataImportOptions } from './LinkedData';
+
 export { toRef, isDataNodeRef } from './DataNodeRef';
+export type { DataNodeRef } from './DataNodeRef';
+
 export { loadDataNodes, dumpDataNodes } from './loadDump';
+export type { DumpedNode } from './loadDump';
+
+export { EventEmitter } from './EventEmitter';
+
+export { ModificationObserver } from './ModificationObserver';
+export type { ModificationRecord } from './ModificationObserver';
+
+export { derive } from './derive';
+export type { DeriveOptions, DeriveReport } from './derive';
+
+export { applyPatches } from './applyPatches';
+
 export {
   isObject,
   isPlainObject,
@@ -11,11 +27,9 @@ export {
   makeGetterFromDictionary,
   createFactoryFromClass,
   castConstructor,
+  memoWithWeakMap,
 } from './utils';
 
-export type { LinkedDataOptions, LinkedDataImportOptions } from './LinkedData';
-export type { DataNodeRef } from './DataNodeRef';
-export type { DumpedNode } from './loadDump';
 export type {
   ArraySchema,
   ArraySchemaDescriptor,

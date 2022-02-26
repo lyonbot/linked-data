@@ -1,4 +1,4 @@
-import { toRef } from '.';
+import { toRef } from './DataNodeRef';
 import { DataNode, LinkedData } from './LinkedData';
 import { SchemaDescriptor } from './schema';
 
@@ -53,6 +53,21 @@ describe('LinkedData', () => {
     }
   });
 
+  it('allocateId', () => {
+    const ld = new LinkedData({})
+
+    ld.createVoidNode({ id: 'foo' })
+    ld.createVoidNode({ id: 'foo.2' })
+    
+    expect(ld.allocateId('foo')).toBe('foo.1')
+    expect(ld.allocateId('foo.2')).toBe('foo.3')
+
+    ld.createVoidNode({ id: 'foo.1' })
+
+    expect(ld.allocateId('foo')).toBe('foo.3')
+    expect(ld.allocateId('foo.2')).toBe('foo.3')
+  })
+
   const schemas: Record<string, SchemaDescriptor> = {
     Message: {
       type: 'object',
@@ -97,7 +112,7 @@ describe('LinkedData', () => {
     expect(node1.value).toEqual(data);
     expect(ld.getNode(node1.id)).toBe(node1);
     expect(ld.getNode('7b433e')).toBeTruthy();
-    expect(ld.getNode('7b433e2')).toBeTruthy(); // duplicated id, added suffix 2
+    expect(ld.getNode('7b433e.1')).toBeTruthy(); // duplicated id, added suffix .1
 
     // use existing Nodes in the data to import
 
@@ -374,7 +389,7 @@ describe('LinkedData', () => {
     const ld = new LinkedData({});
 
     class Temp {
-      constructor(public value: any) {}
+      constructor(public value: any) { }
     }
 
     const node1 = ld.import({ text: 'Hello World' });

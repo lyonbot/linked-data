@@ -1,6 +1,7 @@
 import { DataNodeRef, toRef } from './DataNodeRef';
 import { DataNode } from './LinkedData';
 import { isObject, mapValues } from './utils';
+import type { AnyObject } from './types';
 
 export interface TransformOptions {
   createDest(raw: any, node: DataNode | null, path: (string | number)[]): any;
@@ -9,7 +10,7 @@ export interface TransformOptions {
 
 type Q = {
   dest: any;
-  recipe: Record<string, any> | any[];
+  recipe: AnyObject;
   raw: any;
   node: DataNode | null;
   path: (string | number)[];

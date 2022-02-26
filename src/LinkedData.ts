@@ -1,9 +1,11 @@
 import { Schema, SchemaContext, SchemaDescriptor } from './schema';
-import { isObject, mapValues } from './utils';
-import { getNormalObjectProxy } from './normalObjectProxy';
-import { toRef, isDataNodeRef, DataNodeRef, $getDataNode } from './DataNodeRef';
+import { isObject, mapValues, shallowClone } from './utils';
+import { toRef, DataNodeRef, $getDataNode } from './DataNodeRef';
 import { transformRaw } from './transformRaw';
 import { VOID_NODE_ERROR, warnIfNotPlainObject } from './warnings';
+import { EventEmitter } from './EventEmitter';
+import { makeProxyForNode, convertBeforeWriteRaw } from './proxy';
+import { AnyObject } from './types';
 
 /**
  * @public
@@ -27,16 +29,29 @@ export interface LinkedDataImportOptions {
   overwrite?: 'same-schema' | 'always' | 'never' | ((data: any, existingNode: DataNode, schema: Schema) => boolean);
 }
 
+/** @public */
+export interface LinkedDataEvents {
+  /** trigger before a node's value or object inside it, is getting changed */
+  beforeChange(ev: {
+    context: LinkedData;
+    node: DataNode;
+    target: AnyObject | '<root>';
+    op: 'set' | 'delete';
+    key?: string | number; // unavailable when target is `<root>`
+  }): any;
+}
+
 /**
  * All you need is this node manager.
  *
  * @public
  */
-export class LinkedData {
+export class LinkedData extends EventEmitter<LinkedDataEvents> {
   schemas: SchemaContext;
   _nodes: Map<string, DataNode> = new Map();
 
   constructor(options: LinkedDataOptions) {
+    super();
     const schemas = options.schemas;
     this.schemas = schemas && schemas instanceof SchemaContext ? schemas : new SchemaContext(schemas);
   }
@@ -62,7 +77,8 @@ export class LinkedData {
 
     // the id from raw value, which might duplicate
     const presetId = actualSchema && actualSchema.type === 'object' && actualSchema.readKey(value);
-    let id = presetId && presetId !== 0 ? String(presetId) : '';
+    const id = presetId && presetId !== 0 ? String(presetId) : '';
+    let actualOverwrite = false;
 
     const sameIdNode = id && this._nodes.get(id);
     if (sameIdNode) {
@@ -77,20 +93,39 @@ export class LinkedData {
         overwrite = overwrite(value, sameIdNode, actualSchema!) ? 'always' : 'never';
       }
 
-      if (overwrite === 'never') id = '';
+      actualOverwrite = overwrite === 'always';
     }
 
-    if (!id) id = this.allocateId(presetId ?? (actualSchema && actualSchema.$id));
-
-    const node = new DataNode(this, id, actualSchema);
-    this._nodes.set(id, node);
+    const node = this.createVoidNode({
+      id,
+      schema: actualSchema,
+      overwrite: actualOverwrite,
+    });
     node.setValue(value, options);
     return node as DataNode<T>;
   }
 
-  createVoidNode<T = any>(options: { id?: string; schema?: string | Schema | null }) {
+  createVoidNode<T = any>(options: {
+    id?: string;
+    schema?: string | Schema | null;
+    /**
+     * optional
+     *
+     * if `true` and `id` is not empty, the id will be used as-is and if the id is taken, original DataNode will be replaced
+     */
+    overwrite?: boolean;
+  }) {
     const actualSchema = this.schemas.get(options.schema);
-    const id = this.allocateId(options.id ?? (actualSchema && actualSchema.$id));
+
+    let id: string;
+    const actualOverwrite = !!(typeof options.id === 'string' && options.id !== '' && options.overwrite);
+
+    if (actualOverwrite) id = options.id!;
+    else id = this.allocateId(options.id ?? (actualSchema && actualSchema.$id));
+
+    // const lastNode = actualOverwrite && this._nodes.get(id);
+    // if (lastNode) {
+    // }
 
     const node = new DataNode(this, id, actualSchema);
     this._nodes.set(id, node);
@@ -102,11 +137,13 @@ export class LinkedData {
   }
 
   allocateId(_ref?: any) {
-    const prefix = (typeof _ref === 'string' ? _ref : typeof _ref === 'number' ? String(_ref) : null) || '_node';
+    const ref = (typeof _ref === 'string' ? _ref : typeof _ref === 'number' ? String(_ref) : null) || '_node';
+    if (ref && !this._nodes.has(ref)) return ref;
 
-    let currentId = prefix;
-    for (let index = 1; this._nodes.has(currentId); index++, currentId = prefix + index);
-    return currentId;
+    let newId: string;
+    const [, prefix, nonce] = ref.match(/^(.+)\.([a-z0-9]+)$/) || [null, ref, '0'];
+    for (let i = parseInt(nonce!, 36) + 1; this._nodes.has(newId = prefix + '.' + i.toString(36)); i++);
+    return newId;
   }
 }
 
@@ -179,9 +216,7 @@ export class DataNode<T = any> {
           throw new Error(VOID_NODE_ERROR);
         }
 
-        if (!isObject(raw)) return raw;
-        if (Array.isArray(raw)) return new Array(raw.length);
-        return {};
+        return shallowClone(raw);
       },
       fillDest({ dest, recipe, node }) {
         Object.assign(dest, recipe);
@@ -201,8 +236,6 @@ export class DataNode<T = any> {
 
   /**
    * iterate and visit every node.
-   *
-   * @param visitor
    */
   iterate(visitor: (node: DataNode, path: (string | number)[]) => void | 'abort' | 'skip') {
     const $abort = Symbol('abort');
@@ -247,6 +280,12 @@ export class DataNode<T = any> {
    */
   setValue(value: T, importOptions: LinkedDataImportOptions = {}) {
     this._proxy = void 0;
+    this.owner.emit('beforeChange', {
+      context: this.owner,
+      node: this,
+      target: '<root>',
+      op: 'set',
+    });
 
     // special mark
     if ((value as unknown) === $SET_TO_VOID) {
@@ -279,7 +318,7 @@ export class DataNode<T = any> {
     warnIfNotPlainObject(value);
 
     this.status = Array.isArray(value) ? DataNodeStatus.FILLED_WITH_ARRAY : DataNodeStatus.FILLED_WITH_OBJECT;
-    this.raw = mapValues(value, (v, k) => convertBeforeWriteField(this, v, k, importOptions));
+    this.raw = mapValues(value, (v, k) => convertBeforeWriteRaw(this, v, k, importOptions));
   }
 
   /**
@@ -288,49 +327,4 @@ export class DataNode<T = any> {
   setVoid() {
     this.setValue($SET_TO_VOID as any);
   }
-}
-
-/**
- * deep clone a value, transform all `DataNodeRef`, `DataNode` and Proxy to `DataNodeRef`
- *
- * @internal
- */
-export function deeplyCloneAndNormalizeRefs(x: any) {
-  if (!isObject(x)) return x;
-
-  const ref = toRef(x);
-  if (ref) return ref;
-
-  warnIfNotPlainObject(x);
-  return mapValues(x, deeplyCloneAndNormalizeRefs);
-}
-
-function makeProxyForNode(node: DataNode) {
-  return new Proxy(node.raw, {
-    get: (target, key) => {
-      if (key === $getDataNode) return node;
-
-      const v = Reflect.get(target, key);
-      if (!isObject(v)) return v;
-      if (isDataNodeRef(v)) return v.node?.value;
-      return getNormalObjectProxy(v);
-    },
-    set: (target, key, value) => {
-      /* istanbul ignore next */
-      if (typeof key === 'symbol') throw new Error(`Do not use symbol property`);
-
-      target[key] = convertBeforeWriteField(node, value, key);
-      return true;
-    },
-  });
-}
-
-function convertBeforeWriteField(node: DataNode, value: any, key: any, importOptions?: LinkedDataImportOptions): any {
-  const propSchema = node.schema?.get(key);
-  if (!propSchema) return deeplyCloneAndNormalizeRefs(value); // no need to create another Node
-
-  const ref = toRef(value);
-  if (ref && ref.node.schema !== propSchema) throw new Error('Cannot refer Node whose schema mismatches');
-
-  return ref || node.owner.import(value, propSchema, importOptions).ref;
 }

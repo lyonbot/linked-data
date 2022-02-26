@@ -35,7 +35,7 @@ describe('loadDump', () => {
 
     const dumped = dumpDataNodes(node, { writeKey: true });
     expect(dumped).toMatchSnapshot('dumped with writeKey');
-    expect(dumped.nodeInfos.foo2.raw.id).not.toBe('foo');
+    expect(dumped.nodeInfos['foo.1'].raw.id).not.toBe('foo');
     // console.log(JSON.stringify(dumped, null, 2));
 
     // ----------------------------------------------------------------

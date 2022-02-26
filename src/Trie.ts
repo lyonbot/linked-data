@@ -1,7 +1,7 @@
-type Path = string[];
+import { Path } from './types';
 
 export class TrieNode<T> {
-  key: string;
+  key: string | number;
   path: Path;
   parent?: TrieNode<T>;
   children?: Record<string, TrieNode<T>>;
@@ -9,10 +9,10 @@ export class TrieNode<T> {
   value?: T;
 
   constructor();
-  constructor(parent: TrieNode<T>, key: string);
-  constructor(parent?: TrieNode<T>, key?: string) {
-    if (parent && typeof key === 'string') {
-      this.path = [...parent.path, key];
+  constructor(parent: TrieNode<T>, key: string | number);
+  constructor(parent?: TrieNode<T>, key?: string | number) {
+    if (parent && (typeof key === 'string' || typeof key === 'number')) {
+      this.path = [...parent.path, key as string | number];
       this.parent = parent;
       this.key = key;
     } else {
@@ -56,7 +56,7 @@ export class TrieNode<T> {
     this.getNodeAt(path, true).value = value;
   }
 
-  deleteChild(key: string) {
+  deleteChild(key: string | number) {
     if (!this.children) return;
     delete this.children[key];
   }
@@ -66,7 +66,7 @@ export class TrieNode<T> {
     this.children = void 0;
   }
 
-  setKey(newKey: string) {
+  setKey(newKey: string | number) {
     const { parent, key: oldKey } = this;
     if (!parent) return;
 

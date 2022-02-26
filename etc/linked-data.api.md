@@ -4,6 +4,15 @@
 
 ```ts
 
+import { DefaultListener } from 'tiny-typed-emitter';
+import { ListenerSignature } from 'tiny-typed-emitter';
+import { TypedEmitter } from 'tiny-typed-emitter';
+
+// Warning: (ae-forgotten-export) The symbol "PatchOp" needs to be exported by the entry point index.d.ts
+//
+// @public
+export function applyPatches(root: any, patches: PatchOp[]): any;
+
 // Warning: (ae-forgotten-export) The symbol "ArraySchema_base" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -37,9 +46,12 @@ export class DataNode<T = any> {
     // @internal (undocumented)
     get [$getDataNode](): this;
     constructor(owner: LinkedData, id: string, schema: Schema | null);
-    export(): T;
+    export(options?: {
+        writeKey?: boolean | ((node: DataNode) => boolean);
+    }): T;
     // (undocumented)
     readonly id: string;
+    iterate(visitor: (node: DataNode, path: (string | number)[]) => void | 'abort' | 'skip'): void;
     // (undocumented)
     readonly owner: LinkedData;
     _proxy?: any;
@@ -80,6 +92,62 @@ export const enum DataNodeStatus {
     VOID = 0
 }
 
+// @public
+export function derive(src: any, patches: PatchOp[], options?: DeriveOptions): any;
+
+// @public (undocumented)
+export interface DeriveOptions {
+    clone?: boolean;
+    freeze?: boolean;
+    onFinish?: (report: DeriveReport) => void;
+}
+
+// @public (undocumented)
+export interface DeriveReport {
+    // Warning: (ae-forgotten-export) The symbol "TrieNode" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    mutated?: TrieNode<any>;
+    // (undocumented)
+    result: any;
+}
+
+// @public (undocumented)
+export function dumpDataNodes(node: DataNode, options?: {
+    writeKey?: boolean;
+}): {
+    schemaIds: string[];
+    nodeInfos: Record<string, DumpedNode>;
+};
+
+// @public (undocumented)
+export interface DumpedNode {
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    raw: any;
+    // (undocumented)
+    referredBy: {
+        sourceNodeId: string;
+        path: Path;
+    }[];
+    // (undocumented)
+    refs: {
+        path: Path;
+        targetNodeId: string;
+    }[];
+    // (undocumented)
+    schemaId: string | null;
+}
+
+// @public
+export class EventEmitter<L extends ListenerSignature<L> = DefaultListener> extends TypedEmitter<L> {
+    // (undocumented)
+    subscribe<U extends keyof L>(event: U, listener: L[U]): () => void;
+    // (undocumented)
+    subscribeOnce<U extends keyof L>(event: U, listener: L[U]): () => void;
+}
+
 // @public (undocumented)
 export const isDataNodeRef: (value: any) => value is DataNodeRef;
 
@@ -90,7 +158,7 @@ export function isObject(value: any): value is Record<string | number | symbol, 
 export function isPlainObject(value: any): value is Record<string | number | symbol, any>;
 
 // @public
-export class LinkedData {
+export class LinkedData extends EventEmitter<LinkedDataEvents> {
     constructor(options: LinkedDataOptions);
     // (undocumented)
     allocateId(_ref?: any): string;
@@ -98,6 +166,7 @@ export class LinkedData {
     createVoidNode<T = any>(options: {
         id?: string;
         schema?: string | Schema | null;
+        overwrite?: boolean;
     }): DataNode<T>;
     // (undocumented)
     getNode(id: string): DataNode<any> | undefined;
@@ -105,9 +174,18 @@ export class LinkedData {
     // (undocumented)
     _nodes: Map<string, DataNode>;
     // (undocumented)
-    prune(preservingNodes?: (string | DataNode)[]): void;
-    // (undocumented)
     schemas: SchemaContext;
+}
+
+// @public (undocumented)
+export interface LinkedDataEvents {
+    beforeChange(ev: {
+        context: LinkedData;
+        node: DataNode;
+        target: AnyObject | '<root>';
+        op: 'set' | 'delete';
+        key?: string | number;
+    }): any;
 }
 
 // @public (undocumented)
@@ -122,6 +200,11 @@ export interface LinkedDataOptions {
 }
 
 // @public
+export function loadDataNodes(destination: LinkedData, nodeInfos: Iterable<DumpedNode> | Record<string, DumpedNode>, options?: {
+    overwrite?: boolean;
+}): Record<string, DataNode>;
+
+// @public
 export const makeDataClass: <T>() => new (x: T) => T extends void ? unknown : T;
 
 // @public
@@ -129,6 +212,40 @@ export function makeGetterFromDictionary<T>(dict: Record<string, T>): (input: st
 
 // @public
 export function mapValues(objOrArray: any, mapper: (value: any, key: string | number, whole: any) => any): any;
+
+// @public
+export function memoWithWeakMap<T, U>(fn: (a: T) => U): {
+    (a: T): U;
+    clear(): void;
+    delete(a: T): void;
+    get(a: T): U | undefined;
+};
+
+// @public (undocumented)
+export class ModificationObserver {
+    // Warning: (ae-forgotten-export) The symbol "ModificationObserverCallback" needs to be exported by the entry point index.d.ts
+    constructor(callback: ModificationObserverCallback);
+    // (undocumented)
+    clearBuffer(): void;
+    // (undocumented)
+    disconnect(): void;
+    // (undocumented)
+    observeLinkedData(ld: LinkedData | null | undefined): this;
+    // (undocumented)
+    observeNode(node: DataNode | null | undefined): this;
+    // (undocumented)
+    takeRecords(notClearBuffer?: boolean): ModificationObserverRecord[];
+}
+
+// @public (undocumented)
+export interface ModificationObserverRecord {
+    // (undocumented)
+    node: DataNode;
+    // (undocumented)
+    patches: PatchOp[];
+    // (undocumented)
+    revertPatches: PatchOp[];
+}
 
 // Warning: (ae-forgotten-export) The symbol "ObjectSchema_base" needs to be exported by the entry point index.d.ts
 //
@@ -155,8 +272,8 @@ export class ObjectSchema extends ObjectSchema_base {
 // @public (undocumented)
 export interface ObjectSchemaDescriptor {
     key?: string | {
-        import: string | ((raw: any) => any);
-        export: string | ((dest: any, key: string) => void);
+        import: string | ((raw: any) => string | undefined | void);
+        export: string | ((dest: any, id: string) => void);
     };
     // (undocumented)
     properties: Record<string, string | SchemaDescriptor>;
@@ -179,6 +296,11 @@ export type SchemaDescriptor = ObjectSchemaDescriptor | ArraySchemaDescriptor;
 
 // @public
 export function toRef(value: any): DataNodeRef | undefined;
+
+// Warnings were encountered during analysis:
+//
+// lib/LinkedData.d.ts:31:9 - (ae-forgotten-export) The symbol "AnyObject" needs to be exported by the entry point index.d.ts
+// lib/loadDump.d.ts:11:9 - (ae-forgotten-export) The symbol "Path" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
