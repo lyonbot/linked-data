@@ -136,7 +136,17 @@ export class ModificationObserver {
 
     if (keepBuffer !== true) this.clearBuffer();
 
-    return records;
+    // new nodes' records have higher priority
+
+    const recordsForNewNodes: ModificationRecord[] = [];
+    const recordsForOldNodes: ModificationRecord[] = [];
+
+    records.forEach(record => {
+      if (record.isNewNode) recordsForNewNodes.push(record);
+      else recordsForOldNodes.push(record);
+    });
+
+    return [...recordsForNewNodes, ...recordsForOldNodes];
   }
 
   clearBuffer() {

@@ -92,8 +92,10 @@ describe('ModificationObserver', () => {
         ]);
 
         // ----------------------------------------------------------------
+        // new nodes' records appear before old nodes'
 
-        const mToNode4 = b1.find(x => x.node === node4)!;
+        const mToNode4 = b1[0]!; // b1.find(x => x.node === node4)!;
+        expect(mToNode4.node).toBe(node4);
         expect(mToNode4.isNewNode).toBe(true);
         expect(mToNode4.patches).toEqual([
           { op: 'set', path: [], value: { hello: 123, world: 456, arr: [1, 2] } }, // new node
