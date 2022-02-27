@@ -35,9 +35,9 @@ export interface LinkedDataEvents {
   beforeChange(ev: {
     context: LinkedData;
     node: DataNode;
-    target: AnyObject | '<root>';
+    object: AnyObject | '<root>';
     op: 'set' | 'delete';
-    key?: string | number; // unavailable when target is `<root>`
+    key?: string | number; // unavailable when whole `<root>` is getting `set`-ed
   }): any;
 }
 
@@ -283,7 +283,7 @@ export class DataNode<T = any> {
     this.owner.emit('beforeChange', {
       context: this.owner,
       node: this,
-      target: '<root>',
+      object: '<root>',
       op: 'set',
     });
 

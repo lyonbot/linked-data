@@ -125,7 +125,7 @@ export class ModificationObserver {
 
   private _queued = false;
   private _handleBeforeChange: LinkedDataEvents['beforeChange'] = ev => {
-    const { context, node, target } = ev;
+    const { context, node, object: target } = ev;
 
     // ------------------------
     // ignore some nodes

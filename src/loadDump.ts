@@ -21,6 +21,16 @@ export interface DumpedNode {
   }[];
 }
 
+/**
+ * this is the JSON-safe representation of data, which in reality might contain DataNodeRef objects.
+ *
+ * you can get this by {@link toJsonSafeRaw},
+ * or inflate to the original data by {@link fromJsonSafeRaw}.
+ *
+ * @public
+ * @see {@link toJsonSafeRaw}
+ * @see {@link fromJsonSafeRaw}
+ */
 export interface JSONSafeData {
   raw: any;
   refs: {

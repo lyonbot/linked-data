@@ -36,7 +36,11 @@ export interface ObjectSchemaDescriptor {
          *
          * @param dest - destination, always a object
          * @param id - the identifier (string) to write
-         * @example - (dest, id) => { dest['_id'] = id; }
+         * @example
+         * write id into result's `_id` property
+         * ```js
+         * (dest, id) => { dest['_id'] = id; }
+         * ```
          */
         export: string | ((dest: any, id: string) => void);
       };

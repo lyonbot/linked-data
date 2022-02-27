@@ -8,8 +8,9 @@ import { DefaultListener } from 'tiny-typed-emitter';
 import { ListenerSignature } from 'tiny-typed-emitter';
 import { TypedEmitter } from 'tiny-typed-emitter';
 
-// Warning: (ae-forgotten-export) The symbol "PatchOp" needs to be exported by the entry point index.d.ts
-//
+// @public
+export type AnyObject = Record<string, any> | any[];
+
 // @public
 export function applyPatches(root: any, patches: PatchOp[]): any;
 
@@ -93,6 +94,12 @@ export const enum DataNodeStatus {
 }
 
 // @public
+export interface DeletePatchOp extends PatchOpBase {
+    // (undocumented)
+    op: 'delete';
+}
+
+// @public
 export function derive(src: any, patches: PatchOp[], options?: DeriveOptions): any;
 
 // @public (undocumented)
@@ -112,8 +119,8 @@ export interface DeriveReport {
     result: any;
 }
 
-// @public (undocumented)
-export function dumpDataNodes(node: DataNode, options?: {
+// @public
+export function dumpDataNodes(node: DataNode | null | undefined | Iterable<DataNode | null | undefined>, options?: {
     writeKey?: boolean;
 }): {
     schemaIds: string[];
@@ -148,6 +155,9 @@ export class EventEmitter<L extends ListenerSignature<L> = DefaultListener> exte
     subscribeOnce<U extends keyof L>(event: U, listener: L[U]): () => void;
 }
 
+// @public
+export function fromJsonSafeRaw(safe: JSONSafeData, inflateRef: (id: string) => DataNodeRef | null): any;
+
 // @public (undocumented)
 export const isDataNodeRef: (value: any) => value is DataNodeRef;
 
@@ -156,6 +166,17 @@ export function isObject(value: any): value is Record<string | number | symbol, 
 
 // @public
 export function isPlainObject(value: any): value is Record<string | number | symbol, any>;
+
+// @public
+export interface JSONSafeData {
+    // (undocumented)
+    raw: any;
+    // (undocumented)
+    refs: {
+        path: Path;
+        targetNodeId: string;
+    }[];
+}
 
 // @public
 export class LinkedData extends EventEmitter<LinkedDataEvents> {
@@ -182,7 +203,7 @@ export interface LinkedDataEvents {
     beforeChange(ev: {
         context: LinkedData;
         node: DataNode;
-        target: AnyObject | '<root>';
+        object: AnyObject | '<root>';
         op: 'set' | 'delete';
         key?: string | number;
     }): any;
@@ -200,7 +221,7 @@ export interface LinkedDataOptions {
 }
 
 // @public
-export function loadDataNodes(destination: LinkedData, nodeInfos: Iterable<DumpedNode> | Record<string, DumpedNode>, options?: {
+export function loadDataNodes(destination: LinkedData, data: Iterable<DumpedNode> | Record<string, DumpedNode>, options?: {
     overwrite?: boolean;
 }): Record<string, DataNode>;
 
@@ -233,17 +254,16 @@ export class ModificationObserver {
     observeLinkedData(ld: LinkedData | null | undefined): this;
     // (undocumented)
     observeNode(node: DataNode | null | undefined): this;
-    // (undocumented)
-    takeRecords(notClearBuffer?: boolean): ModificationObserverRecord[];
+    takeRecords(keepBuffer?: boolean): ModificationRecord[];
 }
 
 // @public (undocumented)
-export interface ModificationObserverRecord {
+export interface ModificationRecord {
+    // (undocumented)
+    isNewNode?: boolean;
     // (undocumented)
     node: DataNode;
-    // (undocumented)
     patches: PatchOp[];
-    // (undocumented)
     revertPatches: PatchOp[];
 }
 
@@ -282,6 +302,28 @@ export interface ObjectSchemaDescriptor {
 }
 
 // @public
+export type PatchOp = SetPatchOp | DeletePatchOp | ResortArrayPatchOp;
+
+// @public (undocumented)
+export interface PatchOpBase {
+    // (undocumented)
+    op: string;
+    // (undocumented)
+    path: Path;
+}
+
+// @public
+export type Path = (string | number)[];
+
+// @public
+export interface ResortArrayPatchOp extends PatchOpBase {
+    // (undocumented)
+    indexMap: number[];
+    // (undocumented)
+    op: 'resortArray';
+}
+
+// @public
 export type Schema = ObjectSchema | ArraySchema;
 
 // @public
@@ -295,12 +337,18 @@ export class SchemaContext {
 export type SchemaDescriptor = ObjectSchemaDescriptor | ArraySchemaDescriptor;
 
 // @public
-export function toRef(value: any): DataNodeRef | undefined;
+export interface SetPatchOp extends PatchOpBase {
+    // (undocumented)
+    op: 'set';
+    // (undocumented)
+    value: any;
+}
 
-// Warnings were encountered during analysis:
-//
-// lib/LinkedData.d.ts:31:9 - (ae-forgotten-export) The symbol "AnyObject" needs to be exported by the entry point index.d.ts
-// lib/loadDump.d.ts:11:9 - (ae-forgotten-export) The symbol "Path" needs to be exported by the entry point index.d.ts
+// @public
+export function toJsonSafeRaw(raw: any): JSONSafeData;
+
+// @public
+export function toRef(value: any): DataNodeRef | undefined;
 
 // (No @packageDocumentation comment for this package)
 

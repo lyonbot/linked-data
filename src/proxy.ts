@@ -74,8 +74,8 @@ function deeplyCloneAndNormalizeRefs(x: any) {
 
 const getNOProxyFactoryOfNode = memoWithWeakMap((node: DataNode) => {
   return makeRefGuardProxyFactory({
-    beforeModify(target, op, key) {
-      node.owner.emit('beforeChange', { context: node.owner, node, target, op, key });
+    beforeModify(object, op, key) {
+      node.owner.emit('beforeChange', { context: node.owner, node, object, op, key });
     },
   });
 });
@@ -95,13 +95,13 @@ export function makeProxyForNode(node: DataNode) {
       /* istanbul ignore next */
       if (typeof key === 'symbol') throw new Error(`Do not use symbol property`);
 
-      node.owner.emit('beforeChange', { context: node.owner, node, target, op: 'set', key });
+      node.owner.emit('beforeChange', { context: node.owner, node, object: target, op: 'set', key });
       return Reflect.set(target, key, convertBeforeWriteRaw(node, value, key));
     },
     deleteProperty(target, key) {
       if (typeof key === 'symbol') throw new Error(`Do not use symbol property`);
 
-      node.owner.emit('beforeChange', { context: node.owner, node, target, op: 'delete', key });
+      node.owner.emit('beforeChange', { context: node.owner, node, object: target, op: 'delete', key });
       return Reflect.deleteProperty(target, key);
     },
   });
