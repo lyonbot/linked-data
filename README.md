@@ -67,7 +67,38 @@ button.children.push({ type: 'icon', icon: 'caret-right' });
 // card is modified now
 ```
 
-With LinkedData and DataNode's magic, the following procedure will be deduced:
+With **ModificationObserver** magic, all you need is:
+
+```js
+// ... skip ...
+
+const observer = new ModificationObserver(() => {
+  // find out what's changed
+  const records = observer.takeRecords();
+  console.log(`You just edit ${records.length} nodes!`);
+
+  // you can storage records to somewhere else.
+  // how to undo/redo? see the first figure above
+
+  // stop observing
+  observer.disconnect();
+});
+
+observer.observeLinkedData(linkedData);
+
+// ----------------------------------------
+// now start to modify node.value
+// ...
+
+const card = cardNode.value;
+
+card.theme = 'light';
+card.children.push('another text');
+
+// ... more edit ...
+```
+
+In the `records`, you may get following deduced procedure:
 
 ![](./images/example2.drawio.svg)
 
@@ -134,7 +165,9 @@ You can see lots of generated, `unnamed_`-prefixed identifiers in the example ab
 
 ### When you need Schemas
 
-Schemas are optional. They only play a role in defining those rules:
+Schemas are optional.
+
+You can define some rules by writing schemas:
 
 - `key`:
 

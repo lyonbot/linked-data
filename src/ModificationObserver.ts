@@ -15,24 +15,45 @@ const $root = {};
 type ModificationObserverCallback = (observer: ModificationObserver) => any;
 
 /**
+ * a record contains some changes to a certain DataNode.
+ *
+ * you can retrieve some records by calling `takeRecords()` of {@link ModificationObserver}
+ *
  * @public
+ * @example
+ * ```js
+ * // undo:
+ * record.node.value = applyPatches(record.node.value, record.revertPatches)
+ *
+ * // redo:
+ * record.node.value = applyPatches(record.node.value, record.patches)
+ * ```
+ *
+ * @see {@link ModificationObserver}
  */
 export interface ModificationRecord {
+  /**
+   * which node is edited.
+   */
   node: DataNode;
+
+  /**
+   * whether this node is newly created while this observing duration.
+   */
   isNewNode?: boolean;
 
-  /** 
-   * 
+  /**
+   *
    * **Note**:
-   * This data is not JSON-safe! It may has DataNodeRef. 
+   * This data is not JSON-safe! It may has DataNodeRef.
    * You might need {@link toJsonSafeRaw} before storage this info
    */
   patches: PatchOp[];
 
-  /** 
-   * 
+  /**
+   *
    * **Note**:
-   * This data is not JSON-safe! It may has DataNodeRef. 
+   * This data is not JSON-safe! It may has DataNodeRef.
    * You might need {@link toJsonSafeRaw} before storage this info
    */
   revertPatches: PatchOp[];

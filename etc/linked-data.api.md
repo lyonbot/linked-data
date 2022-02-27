@@ -257,11 +257,9 @@ export class ModificationObserver {
     takeRecords(keepBuffer?: boolean): ModificationRecord[];
 }
 
-// @public (undocumented)
+// @public
 export interface ModificationRecord {
-    // (undocumented)
     isNewNode?: boolean;
-    // (undocumented)
     node: DataNode;
     patches: PatchOp[];
     revertPatches: PatchOp[];
