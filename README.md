@@ -4,12 +4,14 @@ Load and edit linked data easily
 
 ![](./images/concept.drawio.svg)
 
-## Concept
+## Usage
+
+### Create Nodes
 
 Let's say we have such nested data:
 
 ```js
-const originalData = {
+const cardData = {
   type: 'card',
   theme: 'black',
   children: [
@@ -22,7 +24,6 @@ const originalData = {
 And we know its pattern (schemas)
 
 ```js
-// data is Component
 const schemas = {
   Component: {
     type: 'object',
@@ -41,22 +42,36 @@ const schemas = {
 
 We can convert the data it into lots of connected nodes, following the schema relations.
 
-![](./images/example1.drawio.svg)
-
-### Manipulating and Tracking Mutations
-
-We want to manipulate *Node*s easily and get mutations easily.
-
-It is tedious to manipulating the separated node list. People prefer to manipulate the original nested data.
-
 ```js
 const linkedData = new LinkedData({ schemas });
-const cardNode = linkedData.import(originalData, 'Component');
+const cardNode = linkedData.import(cardData, 'Component');
+```
 
-// card is the in original nested structure
-// which can be mutated
+The `linkedData.import()` will follow "Component" schema, explode `cardData` to lots of DataNodes, make links between them, and return the entry DataNode -- the `cardNode` above.
 
+> **Note:**
+>
+> **Schema does NOT validate value type**. A DataNode with "object" schema, can still storage anything -- array, string, number, etc.
+>
+> If actual type of `node.value` mismatches, the schema will be ignored temporarily, until value is set to correct type.
+>
+> In this example, some "Component" nodes store string values only. That's okay.
+
+Every DataNode has a unique key. If you `import` twice without "overwrite" option, you will get new DataNodes. The new nodes will have different keys, although their contents are same as the old nodes'.
+
+![](./images/example1.drawio.svg)
+
+### Read, Edit, Link & Unlink
+
+DataNode provides [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy)-powered `node.value`. You can read, write, splice array, push elements with it freely.
+
+You don't have to care about the links
+-- they are automatically converted into Proxy again. Just consume and mutate the value.
+
+```js
 const card = cardNode.value;
+
+// you can read and write value to "card"
 
 card.theme = 'light';
 card.children.push('another text');
@@ -67,15 +82,48 @@ button.children.push({ type: 'icon', icon: 'caret-right' });
 // card is modified now
 ```
 
+Because we've prepared schemas for each DataNode, the `*.children.push` above, will automatically:
+
+1. create new "Component" DataNode
+2. modify the array, add new link
+
+If you want to manually create a link, use `anotherNode.ref`:
+
+```js
+// create a DataNode with no Schema
+const passwordNode = linkedData.import('dolphins');
+
+// make a link
+cardNode.value.password = passwordNode.ref;
+
+// read
+console.log(cardNode.value.password); // => "dolphins"
+
+// always synced
+passwordNode.value = 'nE7jA%5m';
+console.log(cardNode.value.password); // => "nE7jA%5m"
+
+// unlink
+cardNode.value.password = 'dead string';
+console.log(cardNode.value.password); // => "dead string"
+console.log(passwordNode.value); // => "nE7jA%5m" -- not affected
+```
+
+## Track Mutations, Undo & Redo
+
+> This feature is tree-shakable
+
 With **ModificationObserver** magic, all you need is:
 
 ```js
+import { ModificationObserver } from 'linked-data';
+
 // ... skip ...
 
 const observer = new ModificationObserver(() => {
   // find out what's changed
   const records = observer.takeRecords();
-  console.log(`You just edit ${records.length} nodes!`);
+  console.log(`You just add / edit ${records.length} nodes!`);
 
   // you can storage records to somewhere else.
   // how to undo/redo? see the first figure above
@@ -84,6 +132,7 @@ const observer = new ModificationObserver(() => {
   observer.disconnect();
 });
 
+// start observing
 observer.observeLinkedData(linkedData);
 
 // ----------------------------------------
@@ -95,12 +144,31 @@ const card = cardNode.value;
 card.theme = 'light';
 card.children.push('another text');
 
-// ... more edit ...
+const button = card.children.find(child => child.id === 'openBtn');
+button.children.push({ type: 'icon', icon: 'caret-right' });
 ```
 
 In the `records`, you may get following deduced procedure:
 
 ![](./images/example2.drawio.svg)
+
+With the records, you can easily implement undo & redo:
+
+```js
+import { applyPatches } from 'linked-data';
+
+// undo:
+records.forEach(record => {
+  record.node.value = applyPatches(record.node.value, record.revertPatches);
+});
+
+// then, redo:
+records.forEach(record => {
+  record.node.value = applyPatches(record.node.value, record.patches);
+});
+```
+
+## Theories
 
 ### Mutable & Immutable
 
@@ -167,7 +235,11 @@ You can see lots of generated, `unnamed_`-prefixed identifiers in the example ab
 
 Schemas are optional.
 
-You can define some rules by writing schemas:
+**Schema does NOT validate value type**. A DataNode with "object" schema, can still storage anything -- array, string, number, etc.
+
+If actual type of `node.value` mismatches, the schema will be ignored temporarily, until value is set to correct type.
+
+What can a schema play a role in? You can define some rules by writing schemas:
 
 - `key`:
 
@@ -180,5 +252,3 @@ You can define some rules by writing schemas:
   - when writing values (not reference) into certain properties, automatically create new Node and new reference.
 
 However the other properties **CAN** be a _Node Reference_ too -- user can make links anywhere.
-
-### Node to Schema
