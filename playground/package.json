@@ -8,9 +8,10 @@
     "build": "npm run xx:esbuild"
   },
   "dependencies": {
-    "linked-data": "file:.."
+    "@lyonbot/linked-data": "file:.."
   },
   "devDependencies": {
+    "esbuild": "^0.14.6",
     "react": "npm:preact@^10.6.5"
   }
 }

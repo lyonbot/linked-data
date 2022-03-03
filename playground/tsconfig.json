@@ -6,7 +6,7 @@
     "jsx": "react",
     "outDir": "lib",
     "paths": {
-      "linked-data": ["../lib"]
+      "@lyonbot/linked-data": ["../lib"]
     }
   },
   "include": ["./src/**/*.ts","./src/**/*.tsx"]

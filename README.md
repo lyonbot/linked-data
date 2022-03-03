@@ -1,10 +1,16 @@
-# linked-data
+# @lyonbot/linked-data
 
-Load and edit linked data easily
+Load edit linked (graph-like) data easily
+
+[ [Homepage](https://github.com/lyonbot/linked-data) | [GitHub](https://github.com/lyonbot/linked-data) | [NPM](https://www.npmjs.com/package/@lyonbot/linked-data) ]
 
 ![](./images/concept.drawio.svg)
 
 ## Usage
+
+```
+npm i @lyonbot/linked-data
+```
 
 ### Create Nodes
 
@@ -31,11 +37,10 @@ const schemas = {
     properties: {
       children: 'ComponentArray', // Array also has its own schema (see below)
     },
-  },
 
   ComponentArray: {
     type: 'array',
-    items: 'Component',
+    items: 'Component', // actual items can be non-object. we don't strictly validate the type
   },
 };
 ```
@@ -116,7 +121,7 @@ console.log(passwordNode.value); // => "nE7jA%5m" -- not affected
 With **ModificationObserver** magic, all you need is:
 
 ```js
-import { ModificationObserver } from 'linked-data';
+import { ModificationObserver } from '@lyonbot/linked-data';
 
 // ... skip ...
 
@@ -155,7 +160,7 @@ In the `records`, you may get following deduced procedure:
 With the records, you can easily implement undo & redo:
 
 ```js
-import { applyPatches } from 'linked-data';
+import { applyPatches } from '@lyonbot/linked-data';
 
 // undo:
 records.forEach(record => {
