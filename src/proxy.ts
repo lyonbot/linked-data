@@ -1,5 +1,5 @@
 import { isObject, mapValues } from './utils';
-import { toRef, isDataNodeRef, $getDataNode } from './DataNodeRef';
+import { toRef, isDataNodeRef, $getDataNode, DataNodeRef, forEachDataNodeRef } from './DataNodeRef';
 import { warnIfNotPlainObject } from './warnings';
 import { memoWithWeakMap } from './utils/memoWithWeakMap';
 import type { DataNode, LinkedDataImportOptions } from './LinkedData';
@@ -16,8 +16,13 @@ import type { AnyObject } from './types';
 const makeRefGuardProxyFactory = (options: {
   /** callback when modified, including set and deleteProperty */
   beforeModify?: (target: AnyObject, op: 'set' | 'delete', key: string | number) => void;
+  /** for deeplyCloneAndNormalizeRefs. called when a reference is about to be used in new value */
+  onRef?: (ref: DataNodeRef) => void;
 }) => {
-  const { beforeModify } = options;
+  const { beforeModify, onRef } = options;
+  const DCANRoptions: Parameters<typeof deeplyCloneAndNormalizeRefs>[1] = {
+    onRef,
+  };
 
   const toProxy = (obj: any) => {
     if (!isObject(obj)) return obj;
@@ -37,7 +42,7 @@ const makeRefGuardProxyFactory = (options: {
     set(target, key, value) {
       if (typeof key === 'symbol') throw new Error(`Do not use symbol property`);
 
-      value = deeplyCloneAndNormalizeRefs(value);
+      value = deeplyCloneAndNormalizeRefs(value, DCANRoptions);
       if (isDataNodeRef(value)) {
         if (key === 'length' && Array.isArray(target)) throw new Error("Cannot use DataNodeRef as array's length");
       }
@@ -62,20 +67,27 @@ const makeRefGuardProxyFactory = (options: {
  *
  * @internal
  */
-function deeplyCloneAndNormalizeRefs(x: any) {
+function deeplyCloneAndNormalizeRefs(x: any, options: { onRef?(ref: DataNodeRef): void } = {}): any {
   if (!isObject(x)) return x;
 
   const ref = toRef(x);
-  if (ref) return ref;
+  if (ref) {
+    options.onRef?.(ref);
+    return ref;
+  }
 
   warnIfNotPlainObject(x);
-  return mapValues(x, deeplyCloneAndNormalizeRefs);
+  return mapValues(x, sv => deeplyCloneAndNormalizeRefs(sv, options));
 }
 
 const getNOProxyFactoryOfNode = memoWithWeakMap((node: DataNode) => {
   return makeRefGuardProxyFactory({
     beforeModify(object, op, key) {
       node.owner.emit('beforeChange', { context: node.owner, node, object, op, key });
+      forEachDataNodeRef((object as any)[key], ref => ref.unref(node));
+    },
+    onRef(ref) {
+      ref.addRef(node);
     },
   });
 });
@@ -96,12 +108,16 @@ export function makeProxyForNode(node: DataNode) {
       if (typeof key === 'symbol') throw new Error(`Do not use symbol property`);
 
       node.owner.emit('beforeChange', { context: node.owner, node, object: target, op: 'set', key });
+      forEachDataNodeRef(target[key], ref => ref.unref(node));
+
       return Reflect.set(target, key, convertBeforeWriteRaw(node, value, key));
     },
     deleteProperty(target, key) {
       if (typeof key === 'symbol') throw new Error(`Do not use symbol property`);
 
       node.owner.emit('beforeChange', { context: node.owner, node, object: target, op: 'delete', key });
+      forEachDataNodeRef(target[key], ref => ref.unref(node));
+
       return Reflect.deleteProperty(target, key);
     },
   });
@@ -114,10 +130,18 @@ export function convertBeforeWriteRaw(
   importOptions?: LinkedDataImportOptions,
 ): any {
   const propSchema = node.schema?.get(key);
-  if (!propSchema) return deeplyCloneAndNormalizeRefs(value); // no need to create another Node
+  if (!propSchema) {
+    // no need to create another Node
+    return deeplyCloneAndNormalizeRefs(value, {
+      onRef: ref => ref.addRef(node),
+    });
+  }
 
   const ref = toRef(value);
   if (ref && ref.node.schema !== propSchema) throw new Error('Cannot refer Node whose schema mismatches');
 
-  return ref || node.owner.import(value, propSchema, importOptions).ref;
+  const finalRef = ref || node.owner.import(value, propSchema, importOptions).ref;
+  finalRef.addRef(node);
+
+  return finalRef;
 }

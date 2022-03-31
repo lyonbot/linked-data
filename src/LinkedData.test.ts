@@ -1,6 +1,7 @@
 import { toRef } from './DataNodeRef';
 import { DataNode, LinkedData } from './LinkedData';
 import { SchemaDescriptor } from './schema';
+import { directRefCount } from './utils/testUtils';
 
 describe('LinkedData', () => {
   it('should work', () => {
@@ -13,11 +14,17 @@ describe('LinkedData', () => {
     expect(node2.export()).toEqual('world');
     expect(node3.export()).toEqual({ a: 'hello', b: ['world', 'test'] });
 
+    expect(directRefCount(node3, node1)).toBe(1);
+    expect(directRefCount(node3, node2)).toBe(1);
+
     // refer node2 twice
 
     node1.value = { test: node2.ref };
     node2.value = 'test';
     node3.value.b.push(node1.ref);
+
+    expect(directRefCount(node1, node2)).toBe(1);
+    expect(directRefCount(node3, node1)).toBe(2);
 
     expect(node1.export()).toEqual({ test: 'test' });
     expect(node2.export()).toEqual('test');
@@ -34,6 +41,13 @@ describe('LinkedData', () => {
       expect(loop.a).toBe(loop);
       expect(loop.b[0].master).toBe(loop);
       expect(loop.b[2]).toBe(loop);
+
+      expect(directRefCount(node1, node3)).toBe(1);
+      expect(directRefCount(node1, node2)).toBe(0); // removed
+      expect(directRefCount(node3, node1)).toBe(2);
+
+      node2.value = { master: node3.ref };
+      expect(directRefCount(node2, node3)).toBe(1);
     }
 
     // another way to make a loop reference
@@ -54,19 +68,19 @@ describe('LinkedData', () => {
   });
 
   it('allocateId', () => {
-    const ld = new LinkedData({})
+    const ld = new LinkedData({});
 
-    ld.createVoidNode({ id: 'foo' })
-    ld.createVoidNode({ id: 'foo.2' })
-    
-    expect(ld.allocateId('foo')).toBe('foo.1')
-    expect(ld.allocateId('foo.2')).toBe('foo.3')
+    ld.createVoidNode({ id: 'foo' });
+    ld.createVoidNode({ id: 'foo.2' });
 
-    ld.createVoidNode({ id: 'foo.1' })
+    expect(ld.allocateId('foo')).toBe('foo.1');
+    expect(ld.allocateId('foo.2')).toBe('foo.3');
 
-    expect(ld.allocateId('foo')).toBe('foo.3')
-    expect(ld.allocateId('foo.2')).toBe('foo.3')
-  })
+    ld.createVoidNode({ id: 'foo.1' });
+
+    expect(ld.allocateId('foo')).toBe('foo.3');
+    expect(ld.allocateId('foo.2')).toBe('foo.3');
+  });
 
   const schemas: Record<string, SchemaDescriptor> = {
     Message: {
@@ -389,7 +403,7 @@ describe('LinkedData', () => {
     const ld = new LinkedData({});
 
     class Temp {
-      constructor(public value: any) { }
+      constructor(public value: any) {}
     }
 
     const node1 = ld.import({ text: 'Hello World' });

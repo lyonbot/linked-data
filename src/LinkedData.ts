@@ -1,6 +1,6 @@
 import { Schema, SchemaContext, SchemaDescriptor } from './schema';
 import { isObject, mapValues, shallowClone } from './utils';
-import { toRef, DataNodeRef, $getDataNode } from './DataNodeRef';
+import { toRef, DataNodeRef, $getDataNode, forEachDataNodeRef } from './DataNodeRef';
 import { transformRaw } from './transformRaw';
 import { VOID_NODE_ERROR, warnIfNotPlainObject } from './warnings';
 import { EventEmitter } from './EventEmitter';
@@ -142,7 +142,7 @@ export class LinkedData extends EventEmitter<LinkedDataEvents> {
 
     let newId: string;
     const [, prefix, nonce] = ref.match(/^(.+)\.([a-z0-9]+)$/) || [null, ref, '0'];
-    for (let i = parseInt(nonce!, 36) + 1; this._nodes.has(newId = prefix + '.' + i.toString(36)); i++);
+    for (let i = parseInt(nonce!, 36) + 1; this._nodes.has((newId = prefix + '.' + i.toString(36))); i++);
     return newId;
   }
 }
@@ -189,6 +189,12 @@ export class DataNode<T = any> {
     this.schema = schema;
     this.ref = new DataNodeRef(owner, id);
   }
+
+  /** this node is directly refered by what nodes */
+  referedBy = new Map<DataNode, number>();
+
+  /** this node is directly refering what nodes */
+  refering = new Map<DataNode, number>();
 
   /**
    * @internal
@@ -287,6 +293,8 @@ export class DataNode<T = any> {
       op: 'set',
     });
 
+    forEachDataNodeRef(this.raw, ref => ref.unref(this));
+
     // special mark
     if ((value as unknown) === $SET_TO_VOID) {
       this.raw = void 0;
@@ -309,6 +317,7 @@ export class DataNode<T = any> {
     if (ref) {
       this.raw = ref;
       this.status = DataNodeStatus.FILLED_WITH_REF;
+      ref.addRef(this);
       return;
     }
 
