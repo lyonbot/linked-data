@@ -1,6 +1,7 @@
 import { PatchOp, Path } from './types';
 import { TrieNode } from './Trie';
 import { shallowClone, cloneDeep } from './utils';
+import type { applyPatches } from './applyPatches';
 
 /**
  * @public
@@ -34,9 +35,10 @@ export interface DeriveOptions {
 
 /**
  * following immutable philosophy, make a patched new result.
- * 
- * if you want to directly patch the src object, try `applyPatches()` method
- * 
+ *
+ * if you want to directly patch the src object, try {@link applyPatches} method
+ *
+ * @see {@link applyPatches}
  * @public
  */
 export function derive(src: any, patches: PatchOp[], options?: DeriveOptions) {

@@ -1,9 +1,11 @@
 import { AnyObject, PatchOp } from './types';
+import type { derive } from './derive';
 
 /**
- * apply patches to object. if you don't want to pollute src, you should try `derive()`
- * 
+ * apply patches to object. if you don't want to pollute src, you should try {@link derive}
+ *
  * @public
+ * @see {@link derive}
  * @returns modified result -- usually the same as `root`
  */
 export function applyPatches(root: any, patches: PatchOp[]): any {
@@ -35,7 +37,7 @@ export function applyPatches(root: any, patches: PatchOp[]): any {
       case 'resortArray': {
         const oldArray = target[key];
         if (!Array.isArray(oldArray)) throw new Error('Cannot operate resortArray');
-        target[key] = patch.indexMap.map(oi => oi === -1 ? void 0 : oldArray[oi]);
+        target[key] = patch.indexMap.map(oi => (oi === -1 ? void 0 : oldArray[oi]));
         break;
       }
     }
