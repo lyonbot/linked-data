@@ -1,28 +1,29 @@
-import { AnyObject, PatchOp } from './types';
+import { PatchOp } from './types';
+import { get } from './utils';
 import type { derive } from './derive';
 
 /**
- * apply patches to object. if you don't want to pollute src, you should try {@link derive}
+ * apply patches to object directly.
+ * 
+ * this will mutate `root`. if you want to keep things immutable, you should try {@link derive}
  *
  * @public
  * @see {@link derive}
  * @returns modified result -- usually the same as `root`
  */
 export function applyPatches(root: any, patches: PatchOp[]): any {
-  if (patches.length === 0) return root;
+  if (!Array.isArray(patches) || patches.length === 0) return root;
 
   const container = { root };
 
   for (const patch of patches) {
-    const { op } = patch;
-    const path = ['root', ...patch.path];
+    const parentPath = ['root', ...patch.path];
+    const key = parentPath.pop()!;
 
-    const key = path[path.length - 1]!;
-    const target = path.slice(0, -1).reduce((target: any, key) => target && target[key], container as AnyObject);
+    const target = get(container, parentPath);
+    if (!target) throw new Error(`Invalid path ${JSON.stringify([...parentPath, key])}`);
 
-    if (!target) throw new Error(`Invalid path ${JSON.stringify(path)}`);
-
-    switch (op) {
+    switch (patch.op) {
       case 'set': {
         target[key] = patch.value;
         break;

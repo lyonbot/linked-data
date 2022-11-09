@@ -37,9 +37,13 @@ export {
   mapValues,
   makeDataClass,
   makeGetterFromDictionary,
-  createFactoryFromClass,
   castConstructor,
   memoWithWeakMap,
+  cloneDeep,
+  forEach,
+  get,
+  shallowClone,
+  toArray,
 } from './utils';
 
 export type { Path, AnyObject, PatchOp, PatchOpBase, DeletePatchOp, ResortArrayPatchOp, SetPatchOp } from './types';

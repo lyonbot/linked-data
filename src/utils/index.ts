@@ -1,18 +1,6 @@
 export { memoWithWeakMap } from './memoWithWeakMap';
 
 /**
- * Convert a class constructor to a factory function.
- *
- * @public
- * @param ctor - a class constructor
- */
-export const createFactoryFromClass = <T extends new (...args: any[]) => any>(ctor: T) => {
-  return function (...args: ConstructorParameters<T>): InstanceType<T> {
-    return new ctor(...args);
-  };
-};
-
-/**
  * This returns the input as-is.
  * Cheat TypeScript, make it believe that the function is a class constructor.
  *
@@ -115,9 +103,10 @@ export function mapValues(objOrArray: any, mapper: (value: any, key: string | nu
 export function forEach(objOrArray: any, iter: (value: any, key: string | number, whole: any) => any) {
   if (!isObject(objOrArray)) return;
   if (Array.isArray(objOrArray)) return objOrArray.forEach(iter);
-  Object.keys(objOrArray).forEach(k => {
+  for (const k of Object.keys(objOrArray)) {
+    if (!Object.hasOwnProperty.call(objOrArray, k)) continue;
     iter(objOrArray[k], k, objOrArray);
-  });
+  }
 }
 
 export function shallowClone<T = any>(x: T): T {
@@ -126,15 +115,49 @@ export function shallowClone<T = any>(x: T): T {
   return Object.assign({}, x);
 }
 
-export function cloneDeep(x: any, opts?: { freeze?: boolean }): any {
-  if (typeof x !== 'object' || x === null) return x;
-  const ans = mapValues(x, v => cloneDeep(v, opts));
-  if (opts && opts.freeze) Object.freeze(ans);
-  return ans;
+export function cloneDeep(src: any, opts?: { freeze?: boolean }): any {
+  const visitedMap = new WeakMap();
+  const convert = (x: any) => {
+    if (typeof x !== 'object' || x === null) return x;
+    let cloned = visitedMap.get(x)
+    if (!cloned) {
+      cloned = Array.isArray(x) ? new Array(x.length) : {};
+      visitedMap.set(x, cloned);
+      for (const k of Object.keys(x)) cloned[k] = convert(x[k]);
+      if (opts && opts.freeze) Object.freeze(cloned);
+    }
+
+    return cloned;
+  }
+
+  return convert(src);
 }
 
+/**
+ * if `src` is an array, return a slice without nil values.
+ * otherwise return `[]` if `src` is nil, or `[src]` if not.
+ * 
+ * note: "nil value" equals `null / undefined / "" / false / NaN`, not including zero number
+ * 
+ * @param src 
+ * @returns 
+ */
 export function toArray<T = any>(src: T | Iterable<T | null | undefined> | null | undefined): T[] {
-  if (!src) return [];
-  if (Symbol.iterator in src) return Array.from(src as any).filter(Boolean) as T[];
+  const isNil = (x: any): x is null | undefined | '' | false => x == null || x === '' || x === false || Number.isNaN(x);
+
+  if (isNil(src)) return [];
+  if (Symbol.iterator in src) return Array.from(src as any).filter(v => !isNil(v)) as T[];
   return [src] as T[];
+}
+
+export function get<T = any>(obj: any, path: (string | number)[]): T {
+  if (!Array.isArray(path)) return obj;
+
+  for (const k of path) {
+    if (typeof obj !== 'object' || obj === null) break;
+    if (k === '__proto__') break;
+    obj = obj[k];
+  }
+
+  return obj;
 }

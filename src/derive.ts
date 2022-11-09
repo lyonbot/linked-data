@@ -44,7 +44,7 @@ export interface DeriveOptions {
 export function derive(src: any, patches: PatchOp[], options?: DeriveOptions) {
   const onFinish = options && options.onFinish;
 
-  if (patches.length === 0) {
+  if (!Array.isArray(patches) || patches.length === 0) {
     if (typeof onFinish === 'function') onFinish({ result: src });
     return src;
   }

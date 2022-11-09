@@ -45,7 +45,7 @@ export interface ModificationRecord {
   /**
    *
    * **Note**:
-   * This data is not JSON-safe! It may has DataNodeRef.
+   * This data is not JSON-safe! It may contain *DataNodeRef*s.
    * You might need {@link toJsonSafeRaw} before storage this info
    */
   patches: PatchOp[];
@@ -53,7 +53,7 @@ export interface ModificationRecord {
   /**
    *
    * **Note**:
-   * This data is not JSON-safe! It may has DataNodeRef.
+   * This data is not JSON-safe! It may contain *DataNodeRef*s.
    * You might need {@link toJsonSafeRaw} before storage this info
    */
   revertPatches: PatchOp[];
@@ -116,7 +116,7 @@ export class ModificationObserver {
   /**
    * get all changes since last record-taking, or the first observing
    *
-   * @param keepBuffer - this function will call `clearBuffer` implicitly. to avoid it, set this to true
+   * @param keepBuffer - by default, `clearBuffer()` will be called at the same time. if you don't want to clear, set this to `true`
    */
   takeRecords(keepBuffer?: boolean): ModificationRecord[] {
     const changed = this._changed;

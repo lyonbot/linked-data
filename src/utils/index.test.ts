@@ -1,8 +1,8 @@
-import { isPlainObject, mapValues } from './index';
+import { cloneDeep, isPlainObject, mapValues } from './index';
 
 describe('utils', () => {
   it('isPlainObject', () => {
-    class Test {}
+    class Test { }
 
     expect(isPlainObject('')).toBe(false);
     expect(isPlainObject(Test)).toBe(false);
@@ -58,5 +58,30 @@ describe('utils', () => {
     expect(mapper).toHaveBeenNthCalledWith(1, 1, 0, arr);
     expect(mapper).toHaveBeenNthCalledWith(2, 2, 1, arr);
     expect(mapper).toHaveBeenNthCalledWith(3, 3, 2, arr);
+  });
+
+  it.each([
+    [false],
+    [true]
+  ])('cloneDeep: looped object, freeze=%p', freeze => {
+    const obj: any = { a: [1, 2, 3], b: null, c: null, d: void 0 }
+    obj.b = obj;
+    obj.a[0] = obj;
+
+    const cloned = cloneDeep(obj, { freeze })
+
+    expect(Object.keys(cloned)).toEqual(['a', 'b', 'c', 'd'])
+    expect(cloned.a[0]).toBe(cloned)
+    expect(cloned.a[1]).toBe(2)
+    expect(cloned.a[2]).toBe(3)
+    expect(cloned.a.length).toBe(3)
+    expect(cloned.b).toBe(cloned)
+    expect(cloned.c).toBe(null)
+    expect(cloned.d).toBe(undefined)
+
+    expect(Object.isFrozen(cloned)).toBe(freeze)
+    expect(Object.isFrozen(cloned.a)).toBe(freeze)
+
+    expect(cloned).not.toBe(obj)
   });
 });
