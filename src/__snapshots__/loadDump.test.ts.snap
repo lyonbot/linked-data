@@ -1,45 +1,45 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`loadDump should work: dumped 1`] = `
-Object {
-  "nodeInfos": Object {
-    "_node": Object {
+{
+  "nodeInfos": {
+    "_node": {
       "id": "_node",
-      "raw": Array [
+      "raw": [
         "[[[ ref ]]] #0 -> bar",
         "[[[ ref ]]] #1 -> baz",
         "[[[ ref ]]] #2 -> foo.1",
         "[[[ ref ]]] #3 -> foo",
       ],
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             "replies",
           ],
           "sourceNodeId": "foo",
         },
       ],
-      "refs": Array [
-        Object {
-          "path": Array [
+      "refs": [
+        {
+          "path": [
             0,
           ],
           "targetNodeId": "bar",
         },
-        Object {
-          "path": Array [
+        {
+          "path": [
             1,
           ],
           "targetNodeId": "baz",
         },
-        Object {
-          "path": Array [
+        {
+          "path": [
             2,
           ],
           "targetNodeId": "foo.1",
         },
-        Object {
-          "path": Array [
+        {
+          "path": [
             3,
           ],
           "targetNodeId": "foo",
@@ -47,58 +47,58 @@ Object {
       ],
       "schemaId": "#/Message/replies",
     },
-    "bar": Object {
+    "bar": {
       "id": "bar",
-      "raw": Object {
+      "raw": {
         "id": "bar",
         "text": "Hi",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             0,
           ],
           "sourceNodeId": "_node",
         },
       ],
-      "refs": Array [],
+      "refs": [],
       "schemaId": "Message",
     },
-    "baz": Object {
+    "baz": {
       "id": "baz",
-      "raw": Object {
+      "raw": {
         "id": "baz",
         "text": "Bye",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             1,
           ],
           "sourceNodeId": "_node",
         },
       ],
-      "refs": Array [],
+      "refs": [],
       "schemaId": "Message",
     },
-    "foo": Object {
+    "foo": {
       "id": "foo",
-      "raw": Object {
+      "raw": {
         "id": "foo",
         "replies": "[[[ ref ]]] #0 -> _node",
         "text": "Hello",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             3,
           ],
           "sourceNodeId": "_node",
         },
       ],
-      "refs": Array [
-        Object {
-          "path": Array [
+      "refs": [
+        {
+          "path": [
             "replies",
           ],
           "targetNodeId": "_node",
@@ -106,25 +106,25 @@ Object {
       ],
       "schemaId": "Message",
     },
-    "foo.1": Object {
+    "foo.1": {
       "id": "foo.1",
-      "raw": Object {
+      "raw": {
         "id": "foo",
         "text": "Hey?",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             2,
           ],
           "sourceNodeId": "_node",
         },
       ],
-      "refs": Array [],
+      "refs": [],
       "schemaId": "Message",
     },
   },
-  "schemaIds": Array [
+  "schemaIds": [
     "Message",
     "#/Message/replies",
   ],
@@ -132,45 +132,45 @@ Object {
 `;
 
 exports[`loadDump should work: dumped with writeKey 1`] = `
-Object {
-  "nodeInfos": Object {
-    "_node": Object {
+{
+  "nodeInfos": {
+    "_node": {
       "id": "_node",
-      "raw": Array [
+      "raw": [
         "[[[ ref ]]] #0 -> bar",
         "[[[ ref ]]] #1 -> baz",
         "[[[ ref ]]] #2 -> foo.1",
         "[[[ ref ]]] #3 -> foo",
       ],
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             "replies",
           ],
           "sourceNodeId": "foo",
         },
       ],
-      "refs": Array [
-        Object {
-          "path": Array [
+      "refs": [
+        {
+          "path": [
             0,
           ],
           "targetNodeId": "bar",
         },
-        Object {
-          "path": Array [
+        {
+          "path": [
             1,
           ],
           "targetNodeId": "baz",
         },
-        Object {
-          "path": Array [
+        {
+          "path": [
             2,
           ],
           "targetNodeId": "foo.1",
         },
-        Object {
-          "path": Array [
+        {
+          "path": [
             3,
           ],
           "targetNodeId": "foo",
@@ -178,58 +178,58 @@ Object {
       ],
       "schemaId": "#/Message/replies",
     },
-    "bar": Object {
+    "bar": {
       "id": "bar",
-      "raw": Object {
+      "raw": {
         "id": "bar",
         "text": "Hi",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             0,
           ],
           "sourceNodeId": "_node",
         },
       ],
-      "refs": Array [],
+      "refs": [],
       "schemaId": "Message",
     },
-    "baz": Object {
+    "baz": {
       "id": "baz",
-      "raw": Object {
+      "raw": {
         "id": "baz",
         "text": "Bye",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             1,
           ],
           "sourceNodeId": "_node",
         },
       ],
-      "refs": Array [],
+      "refs": [],
       "schemaId": "Message",
     },
-    "foo": Object {
+    "foo": {
       "id": "foo",
-      "raw": Object {
+      "raw": {
         "id": "foo",
         "replies": "[[[ ref ]]] #0 -> _node",
         "text": "Hello",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             3,
           ],
           "sourceNodeId": "_node",
         },
       ],
-      "refs": Array [
-        Object {
-          "path": Array [
+      "refs": [
+        {
+          "path": [
             "replies",
           ],
           "targetNodeId": "_node",
@@ -237,25 +237,25 @@ Object {
       ],
       "schemaId": "Message",
     },
-    "foo.1": Object {
+    "foo.1": {
       "id": "foo.1",
-      "raw": Object {
+      "raw": {
         "id": "foo.1",
         "text": "Hey?",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             2,
           ],
           "sourceNodeId": "_node",
         },
       ],
-      "refs": Array [],
+      "refs": [],
       "schemaId": "Message",
     },
   },
-  "schemaIds": Array [
+  "schemaIds": [
     "Message",
     "#/Message/replies",
   ],
@@ -263,45 +263,45 @@ Object {
 `;
 
 exports[`loadDump should work: loaded 1`] = `
-Object {
-  "nodeInfos": Object {
-    "_node.2": Object {
+{
+  "nodeInfos": {
+    "_node.2": {
       "id": "_node.2",
-      "raw": Array [
+      "raw": [
         "[[[ ref ]]] #0 -> bar.1",
         "[[[ ref ]]] #1 -> baz.1",
         "[[[ ref ]]] #2 -> foo.3",
         "[[[ ref ]]] #3 -> foo.2",
       ],
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             "replies",
           ],
           "sourceNodeId": "foo.2",
         },
       ],
-      "refs": Array [
-        Object {
-          "path": Array [
+      "refs": [
+        {
+          "path": [
             0,
           ],
           "targetNodeId": "bar.1",
         },
-        Object {
-          "path": Array [
+        {
+          "path": [
             1,
           ],
           "targetNodeId": "baz.1",
         },
-        Object {
-          "path": Array [
+        {
+          "path": [
             2,
           ],
           "targetNodeId": "foo.3",
         },
-        Object {
-          "path": Array [
+        {
+          "path": [
             3,
           ],
           "targetNodeId": "foo.2",
@@ -309,58 +309,58 @@ Object {
       ],
       "schemaId": "#/Message/replies",
     },
-    "bar.1": Object {
+    "bar.1": {
       "id": "bar.1",
-      "raw": Object {
+      "raw": {
         "id": "bar",
         "text": "Hi",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             0,
           ],
           "sourceNodeId": "_node.2",
         },
       ],
-      "refs": Array [],
+      "refs": [],
       "schemaId": "Message",
     },
-    "baz.1": Object {
+    "baz.1": {
       "id": "baz.1",
-      "raw": Object {
+      "raw": {
         "id": "baz",
         "text": "Bye",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             1,
           ],
           "sourceNodeId": "_node.2",
         },
       ],
-      "refs": Array [],
+      "refs": [],
       "schemaId": "Message",
     },
-    "foo.2": Object {
+    "foo.2": {
       "id": "foo.2",
-      "raw": Object {
+      "raw": {
         "id": "foo",
         "replies": "[[[ ref ]]] #0 -> _node.2",
         "text": "Hello",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             3,
           ],
           "sourceNodeId": "_node.2",
         },
       ],
-      "refs": Array [
-        Object {
-          "path": Array [
+      "refs": [
+        {
+          "path": [
             "replies",
           ],
           "targetNodeId": "_node.2",
@@ -368,25 +368,25 @@ Object {
       ],
       "schemaId": "Message",
     },
-    "foo.3": Object {
+    "foo.3": {
       "id": "foo.3",
-      "raw": Object {
+      "raw": {
         "id": "foo.1",
         "text": "Hey?",
       },
-      "referredBy": Array [
-        Object {
-          "path": Array [
+      "referredBy": [
+        {
+          "path": [
             2,
           ],
           "sourceNodeId": "_node.2",
         },
       ],
-      "refs": Array [],
+      "refs": [],
       "schemaId": "Message",
     },
   },
-  "schemaIds": Array [
+  "schemaIds": [
     "Message",
     "#/Message/replies",
   ],

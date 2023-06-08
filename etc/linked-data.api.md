@@ -39,8 +39,10 @@ export interface ArraySchemaDescriptor {
 // @public
 export function castConstructor<T, T2, U extends any[]>(ctor: (this: T, ...x: U) => T2): new (...x: U) => T2 extends void ? T : T2;
 
-// @public
-export const createFactoryFromClass: <T extends new (...args: any[]) => any>(ctor: T) => (...args: ConstructorParameters<T>) => InstanceType<T>;
+// @public (undocumented)
+export function cloneDeep(src: any, opts?: {
+    freeze?: boolean;
+}): any;
 
 // @public (undocumented)
 export class DataNode<T = any> {
@@ -58,6 +60,8 @@ export class DataNode<T = any> {
     _proxy?: any;
     raw?: any;
     readonly ref: DataNodeRef;
+    referedBy: Map<DataNode<any>, number>;
+    refering: Map<DataNode<any>, number>;
     // (undocumented)
     readonly schema: Schema | null;
     setValue(value: T, importOptions?: LinkedDataImportOptions): void;
@@ -72,11 +76,15 @@ export class DataNode<T = any> {
 export class DataNodeRef {
     constructor(owner: LinkedData, id: string);
     // (undocumented)
+    addRef(fromNode: DataNode): void;
+    // (undocumented)
     id: string;
     // (undocumented)
     get node(): DataNode<any>;
     // (undocumented)
     owner: LinkedData;
+    // (undocumented)
+    unref(fromNode: DataNode): void;
 }
 
 // @public (undocumented)
@@ -155,8 +163,14 @@ export class EventEmitter<L extends ListenerSignature<L> = DefaultListener> exte
     subscribeOnce<U extends keyof L>(event: U, listener: L[U]): () => void;
 }
 
+// @public (undocumented)
+export function forEach(objOrArray: any, iter: (value: any, key: string | number, whole: any) => any): void;
+
 // @public
 export function fromJsonSafeRaw(safe: JSONSafeData, inflateRef: (id: string) => DataNodeRef | null): any;
+
+// @public (undocumented)
+export function get<T = any>(obj: any, path: (string | number)[]): T;
 
 // @public (undocumented)
 export const isDataNodeRef: (value: any) => value is DataNodeRef;
@@ -341,6 +355,12 @@ export interface SetPatchOp extends PatchOpBase {
     // (undocumented)
     value: any;
 }
+
+// @public (undocumented)
+export function shallowClone<T = any>(x: T): T;
+
+// @public
+export function toArray<T = any>(src: T | Iterable<T | null | undefined> | null | undefined): T[];
 
 // @public
 export function toJsonSafeRaw(raw: any): JSONSafeData;

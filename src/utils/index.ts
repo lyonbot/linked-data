@@ -143,10 +143,11 @@ export function cloneDeep(src: any, opts?: { freeze?: boolean }): any {
  * @returns 
  */
 export function toArray<T = any>(src: T | Iterable<T | null | undefined> | null | undefined): T[] {
-  const isNil = (x: any): x is null | undefined | '' | false => x == null || x === '' || x === false || Number.isNaN(x);
+  const isNil = (x: any): x is null | undefined | '' | false | void => x == null || x === '' || x === false || Number.isNaN(x);
 
   if (isNil(src)) return [];
-  if (Symbol.iterator in src) return Array.from(src as any).filter(v => !isNil(v)) as T[];
+  if (!src) return [];
+  if (typeof src === 'object' && (Symbol.iterator in src)) return Array.from(src as any).filter(v => !isNil(v)) as T[];
   return [src] as T[];
 }
 

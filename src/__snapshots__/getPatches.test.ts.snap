@@ -1,45 +1,45 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`getPatches basically works 1`] = `
-Array [
-  Object {
-    "indexMap": Array [
+[
+  {
+    "indexMap": [
       1,
       2,
       -1,
     ],
     "op": "resortArray",
-    "path": Array [
+    "path": [
       "foo",
     ],
   },
-  Object {
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       "foo",
       2,
     ],
     "value": 3,
   },
-  Object {
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       "bar",
       "baz",
     ],
     "value": "baz",
   },
-  Object {
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       "bar",
       "newest",
     ],
     "value": "newest",
   },
-  Object {
+  {
     "op": "delete",
-    "path": Array [
+    "path": [
       "bar",
       "deleted",
     ],
@@ -48,44 +48,44 @@ Array [
 `;
 
 exports[`getPatches basically works 2`] = `
-Array [
-  Object {
+[
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       "bar",
       "deleted",
     ],
     "value": "I am removed",
   },
-  Object {
+  {
     "op": "delete",
-    "path": Array [
+    "path": [
       "bar",
       "newest",
     ],
   },
-  Object {
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       "bar",
       "baz",
     ],
     "value": "old baz",
   },
-  Object {
-    "indexMap": Array [
+  {
+    "indexMap": [
       -1,
       0,
       1,
     ],
     "op": "resortArray",
-    "path": Array [
+    "path": [
       "foo",
     ],
   },
-  Object {
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       "foo",
       0,
     ],
@@ -95,29 +95,29 @@ Array [
 `;
 
 exports[`getPatches resorted objects 1`] = `
-Array [
-  Object {
-    "indexMap": Array [
+[
+  {
+    "indexMap": [
       -1,
       2,
       1,
       0,
     ],
     "op": "resortArray",
-    "path": Array [],
+    "path": [],
   },
-  Object {
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       0,
     ],
-    "value": Object {
+    "value": {
       "x": 0,
     },
   },
-  Object {
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       3,
       "x",
     ],
@@ -127,31 +127,31 @@ Array [
 `;
 
 exports[`getPatches resorted objects 2`] = `
-Array [
-  Object {
+[
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       3,
       "x",
     ],
     "value": -3,
   },
-  Object {
-    "indexMap": Array [
+  {
+    "indexMap": [
       3,
       2,
       1,
       -1,
     ],
     "op": "resortArray",
-    "path": Array [],
+    "path": [],
   },
-  Object {
+  {
     "op": "set",
-    "path": Array [
+    "path": [
       3,
     ],
-    "value": Object {
+    "value": {
       "y": 555,
     },
   },
@@ -159,12 +159,12 @@ Array [
 `;
 
 exports[`getPatches whole replaced 1`] = `
-Array [
-  Object {
+[
+  {
     "op": "set",
-    "path": Array [],
-    "value": Object {
-      "foo": Array [
+    "path": [],
+    "value": {
+      "foo": [
         1,
         2,
         3,
@@ -175,11 +175,11 @@ Array [
 `;
 
 exports[`getPatches whole replaced 2`] = `
-Array [
-  Object {
+[
+  {
     "op": "set",
-    "path": Array [],
-    "value": Object {
+    "path": [],
+    "value": {
       "hey": "yo",
     },
   },
